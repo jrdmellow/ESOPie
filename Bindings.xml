@@ -1,0 +1,10 @@
+<Bindings>
+    <Layer name="SI_KEYBINDINGS_LAYER_GENERAL">
+        <Category name="SI_ESOPIE_TITLE">
+            <Action name="ESOPIE_HOLD_ITERACTION">
+                <Down>ESOPie:OnHoldMenuOpen()</Down>
+                <Up>ESOPie:OnHoldMenuClose()</Up>
+            </Action>
+        </Category>
+    </Layer>
+</Bindings>

@@ -109,8 +109,8 @@ function ESOPie:ExecuteChatCommand(commandStr)
     local args = nil
     local p = commandStr:find(" ")
     if p then
-        command = commandStr:sub(1, p)
-        args = commandStr:sub(p)
+        command = commandStr:sub(1, p-1)
+        args = commandStr:sub(p+1)
     else
         command = commandStr
     end

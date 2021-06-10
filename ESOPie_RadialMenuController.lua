@@ -102,6 +102,13 @@ function ESOPie_RadialMenuController:ShowMenu()
     end
     self.menu:Show()
 
+    if IsInGamepadPreferredMode() then
+        self.menuControl.selectedLabel:SetFont("ZoFontGamepad54")
+    else
+        self.menuControl.selectedLabel:SetFont("ZoInteractionPrompt")
+    end
+    self.menuControl.selectedLabel:SetText("")
+
     self.isInteracting = true
     LockCameraRotation(true)
     RETICLE:RequestHidden(true)
@@ -119,6 +126,7 @@ end
 
 function ESOPie_RadialMenuController:SetupEntryControl(control, data)
     if not data then return end
+    ZO_SetupSelectableItemRadialMenuEntryTemplate(control)
     if data.selected then
         if control.glow then
             control.glow:SetAlpha(1)
@@ -130,13 +138,6 @@ function ESOPie_RadialMenuController:SetupEntryControl(control, data)
         end
         control.animation:GetLastAnimation():SetAnimatedControl(control.glow)
     end
-
-    if IsInGamepadPreferredMode() then
-        control.selectedLabel:SetFont("ZoFontGamepad54")
-    else
-        control.selectedLabel:SetFont("ZoInteractionPrompt")
-    end
-    control.selectedLabel:SetText("")
 end
 
 function ESOPie_RadialMenuController:OnSelectionChangedCallback(selectedEntry)
@@ -163,7 +164,7 @@ function ESOPie_RadialMenuController:NavigateCurrentSelection()
 end
 
 function ESOPie_RadialMenuController:AddSlot(name, inactiveIcon, activeIcon)
-    self.menu:AddEntry(name, inactiveIcon, activeIcon, function() self:ActivateCurrentSelection() end)
+    self.menu:AddEntry(name, inactiveIcon, activeIcon, function() self:ActivateCurrentSelection() end, {name=name})
 end
 
 
@@ -175,10 +176,6 @@ function ESOPieUI_PieMenuInitialize(self)
 end
 
 function ESOPieUI_EntryTemplateInitialize(self)
-    self.glow = self:GetNamedChild("Glow")
-    self.icon = self:GetNamedChild("Icon")
-    self.count = self:GetNamedChild("CountText")
-    self.cooldown = self:GetNamedChild("Cooldown")
     self.frame = self:GetNamedChild("Frame")
     self.status = self:GetNamedChild("StatusText")
     ZO_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)

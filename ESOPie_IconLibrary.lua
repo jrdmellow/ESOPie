@@ -1,7 +1,3 @@
-ESOPIE_ICON_CATEGORY_GENERAL = 1
-ESOPIE_ICON_CATEGORY_ABILITIES = 2
-ESOPIE_ICON_CATEGORY_ACHIEVEMENTS = 3
-ESOPIE_ICON_CATEGORY_OTHER = 4
 ESOPIE_ICON_LIBRARY = {
     "/esoui/art/icons/crafting_dwemer_shiny_cog.dds",
     "/esoui/art/battlegrounds/battlegrounds_tabicon_battlegrounds_up.dds",

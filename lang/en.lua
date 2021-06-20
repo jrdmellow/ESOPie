@@ -5,13 +5,11 @@ local strings = {
     ESOPIE_BYLINE = "<<1>> <<2>> created by <<3>>.",
 
     -- Settings
-    ESOPIE_DEFAULT_RINGNAME                     = "MyRing",
-    ESOPIE_DEFAULT_ACTIONNAME                   = "Action",
-    ESOPIE_DEFAULT_ROOTNAME                     = "Root Ring",
-    ESOPIE_DEFAULT_SOCIALRING                   = "Social Ring",
+    ESOPIE_DEFAULT_RINGNAME                     = "New Ring",
+    ESOPIE_DEFAULT_ACTIONNAME                   = "New Slot",
+    ESOPIE_DEFAULT_ROOTNAME                     = "Root",
+    ESOPIE_DEFAULT_SOCIALRING                   = "Social",
     ESOPIE_DEFAULT_WAVEACTION                   = "Wave",
-    ESOPIE_DEFAULT_SAYHELLO                     = "Say Hello",
-    ESOPIE_DEFAULT_CHATHELLO                    = "Hello!",
     ESOPIE_DEFAULT_OPENEMOTES                   = "Emotes",
 
     -- Settings UI

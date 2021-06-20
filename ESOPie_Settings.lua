@@ -19,53 +19,134 @@ local ESOPIE_DEFAULT_SLOTINFO = {
     uniqueid = 0,
     name = L(ESOPIE_DEFAULT_ACTIONNAME),
     icon = ESOPIE_ICON_SLOT_DEFUALT,
-    action = ESOPIE_ACTION_NOOP,
-    data = {}
+    action = ESOPie.actions.ACTION_NOOP,
+    data = nil
 }
 local ESOPIE_DB_DEFAULT = {
-    rings = {
-        [1] = {
-            uniqueid = 1,
-            name = L(ESOPIE_DEFAULT_ROOTNAME),
-            slots = {
+    ["rings"] =
+    {
+        [1] =
+        {
+            ["uniqueid"] = 1,
+            ["name"] = "Root",
+            ["slots"] =
+            {
+                [1] =
                 {
-                    uniqueid = 2,
-                    name = L(ESOPIE_DEFAULT_SOCIALRING),
-                    icon = "",
-                    action = ESOPie.actions.ACTION_SUBMENU,
-                    data = L(ESOPIE_DEFAULT_SOCIALRING),
+                    ["uniqueid"] = 2,
+                    ["name"] = "Social",
+                    ["action"] = 2,
+                    ["icon"] = "/esoui/art/icons/ability_debuff_silence.dds",
+                    ["data"] = 12,
                 },
+                [2] =
                 {
-                    uniqueid = 3,
-                    name = L(ESOPIE_DEFAULT_OPENEMOTES),
-                    icon = "",
-                    action = ESOPie.actions.ACTION_OPENEMOTEWHEEL,
-                    data = nil,
-                }
-            }
+                    ["uniqueid"] = 3,
+                    ["name"] = "Show Off",
+                    ["action"] = 2,
+                    ["icon"] = "/esoui/art/icons/ability_debuff_levitate.dds",
+                    ["data"] = 9,
+                },
+                [3] =
+                {
+                    ["uniqueid"] = 4,
+                    ["name"] = "Music",
+                    ["action"] = 2,
+                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musiclute001.dds",
+                    ["data"] = 5,
+                },
+            },
         },
-        [2] = {
-            uniqueid = 4,
-            name = L(ESOPIE_DEFAULT_SOCIALRING),
-            slots = {
+        [2] =
+        {
+            ["uniqueid"] = 5,
+            ["name"] = "Music",
+            ["slots"] =
+            {
+                [1] =
                 {
-                    uniqueid = 5,
-                    name = L(ESOPIE_DEFAULT_WAVEACTION),
-                    icon = "",
-                    action = ESOPie.actions.ACTION_CHATEXEC,
-                    data = "/wave",
+                    ["uniqueid"] = 6,
+                    ["name"] = "Play Lute",
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musiclute001.dds",
+                    ["data"] = 5,
                 },
+                [2] =
                 {
-                    uniqueid = 6,
-                    name = L(ESOPIE_DEFAULT_SAYHELLO),
-                    icon = "",
-                    action = ESOPie.actions.ACTION_CHATEXEC,
-                    data = "/s " .. L(ESOPIE_DEFAULT_CHATHELLO),
+                    ["uniqueid"] = 7,
+                    ["name"] = "Play Drums",
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musicdrum001.dds",
+                    ["data"] = 7,
                 },
-            }
+                [3] =
+                {
+                    ["uniqueid"] = 8,
+                    ["name"] = "Play Flute",
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musicrecorder001.dds",
+                    ["data"] = 6,
+                },
+            },
+        },
+        [3] =
+        {
+            ["uniqueid"] = 9,
+            ["name"] = "Show Off",
+            ["slots"] =
+            {
+                [1] =
+                {
+                    ["uniqueid"] = 10,
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/ability_companion_mageguild_001.dds",
+                    ["data"] = 611,
+                    ["name"] = "Scorch",
+                },
+                [2] =
+                {
+                    ["uniqueid"] = 11,
+                    ["name"] = "Flex",
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/emote_flex.dds",
+                    ["data"] = 468,
+                },
+            },
+        },
+        [4] =
+        {
+            ["uniqueid"] = 12,
+            ["name"] = "Social",
+            ["slots"] =
+            {
+                [1] =
+                {
+                    ["name"] = "Greet",
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/ability_companion_nightblade_013.dds",
+                    ["data"] = 162,
+                    ["uniqueid"] = 13,
+                },
+                [2] =
+                {
+                    ["name"] = "Clap",
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/ability_companion_restorationstaff_002.dds",
+                    ["data"] = 185,
+                    ["uniqueid"] = 14,
+                },
+                [3] =
+                {
+                    ["uniqueid"] = 15,
+                    ["action"] = 6,
+                    ["icon"] = "/esoui/art/icons/ability_buff_minor_force.dds",
+                    ["data"] = 172,
+                    ["name"] = "Congratulate",
+                },
+            },
         },
     },
-    rootRing = 1,
+    ["rootRing"] = 1,
 }
 
 local formData = {
@@ -93,20 +174,6 @@ local formData = {
     currentEditingSlot = {}
 }
 
-local function ToggleSubmenu(controlName, open) -- Thanks to AutoCategory for this one
-    local control = WINDOW_MANAGER:GetControlByName(controlName, "")
-    if not control then
-        LogVerbose("[Toggle] Unable to find control (%s)", controlName)
-        return
-    end
-    control.open = open
-    if control.open then
-        control.animation:PlayFromStart()
-    else
-        control.animation:PlayFromEnd()
-    end
-end
-
 local function UpdateDropdown(controlName, choices, values, tooltips)
     local control = WINDOW_MANAGER:GetControlByName(controlName)
     if not control then
@@ -115,15 +182,6 @@ local function UpdateDropdown(controlName, choices, values, tooltips)
     end
     control:UpdateChoices(choices, values, tooltips)
     control:UpdateValue()
-end
-
-local function UpdateTexture(controlName, image)
-    local control = WINDOW_MANAGER:GetControlByName(controlName)
-    if not control then
-        LogVerbose("[Preview] Unable to find control (%s)", controlName)
-    end
-    LogVerbose("Updating texture '%s' => '%s'", controlName, image)
-    control.texture:SetTexture(image)
 end
 
 local function UpdateCollectionsCache()
@@ -147,17 +205,6 @@ local function UpdateCollectionsCache()
     -- COLLECTIBLE_CATEGORY_TYPE_MEMENTO
 end
 
-local function RefreshEmotePreview()
-    local icon = "/esoui/art/help/help_tabicon_emotes_up.dds"
-    if formData.currentEditingSlot then
-        local collectibleData = ZO_COLLECTIBLE_DATA_MANAGER:GetCollectibleDataById(formData.currentEditingSlot.data)
-        if collectibleData then
-            icon = collectibleData:GetIcon()
-        end
-    end
-    UpdateTexture("ESOPIE_SlotEdit_EmoteIcon", icon)
-end
-
 local function RebuildEmoteDropdown()
     local emoteNames = {}
     local emoteValues = {}
@@ -168,7 +215,6 @@ local function RebuildEmoteDropdown()
         table.insert(emoteValues, emoteInfo.emoteId)
     end
     UpdateDropdown("ESOPIE_SlotEdit_Emote", emoteNames, emoteValues)
-    RefreshEmotePreview()
 end
 
 local function RebuildDropdowns()
@@ -249,6 +295,18 @@ function ESOPie:InitializeSettings()
             LogVerbose("OnPanelRefreshed")
             RebuildDropdowns()
         end
+    end
+
+    local function IsSubringAction(slot)
+        return slot and slot.action == ESOPie.actions.ACTION_SUBMENU
+    end
+
+    local function IsCommandAction(slot)
+        return slot and (slot.action == ESOPie.actions.ACTION_CHATEXEC or slot.action == ESOPie.actions.ACTION_CODEEXEC)
+    end
+
+    local function IsEmoteAction(slot)
+        return slot and slot.action == ESOPie.actions.ACTION_PLAYEMOTE
     end
 
     InitNextID()
@@ -439,6 +497,7 @@ function ESOPie:InitializeSettings()
                     tooltip = "",
                     isMultiline = false,
                     getFunc = function()
+                        d("Slot Name")
                         if formData.currentEditingSlot then
                             return formData.currentEditingSlot.name
                         else
@@ -463,6 +522,7 @@ function ESOPie:InitializeSettings()
                     width = "full",
                     choices = ESOPIE_ICON_LIBRARY,
                     getFunc = function()
+                        d("Slot Icon (Browser)")
                         if formData.currentEditingSlot then
                             return formData.currentEditingSlot.icon
                         end
@@ -481,6 +541,7 @@ function ESOPie:InitializeSettings()
                     tooltip = "Any icon can be used if you know the path.",
                     isMultiline = false,
                     getFunc = function()
+                        d("Slot Icon (Path)")
                         if formData.currentEditingSlot then
                             return formData.currentEditingSlot.icon
                         else
@@ -520,48 +581,8 @@ function ESOPie:InitializeSettings()
                 },
                 {
                     type = "submenu",
-                    name = "Command",
-                    disabled = function()
-                        if formData.currentEditingSlot then
-                            return not (formData.currentEditingSlot.action == ESOPie.actions.ACTION_CHATEXEC or formData.currentEditingSlot.action == ESOPie.actions.ACTION_CODEEXEC)
-                        else
-                            return true
-                        end
-                    end,
-                    controls = {
-                        {
-                            type = "editbox",
-                            name = "Command",
-                            tooltip = "Chat command or Lua code to execute when activated.",
-                            isMultiline = true,
-                            disabled = function()
-                                if formData.currentEditingSlot then
-                                    return formData.currentEditingSlot.action ~= ESOPie.actions.ACTION_CHATEXEC and formData.currentEditingSlot.action ~= ESOPie.actions.ACTION_CODEEXEC
-                                else
-                                    return true
-                                end
-                            end,
-                            getFunc = function()
-                                if formData.currentEditingSlot then
-                                    return formData.currentEditingSlot.data
-                                else
-                                    return ""
-                                end
-                            end,
-                            setFunc = function(value)
-                                if formData.currentEditingSlot then
-                                    formData.currentEditingSlot.data = value
-                                end
-                            end,
-                        },
-                    }
-                },
-                {
-                    type = "submenu",
                     name = "Subring",
-                    disabled = function()
-                        return not (formData.currentEditingSlot and formData.currentEditingSlot.action == ESOPie.actions.ACTION_SUBMENU)
-                    end,
+                    disabled = function() return not IsSubringAction(formData.currentEditingSlot) end,
                     controls = {
                         {
                             type = "dropdown",
@@ -572,14 +593,14 @@ function ESOPie:InitializeSettings()
                             choices = formData.ringChoices,
                             choicesValues = formData.ringChoicesValues,
                             getFunc = function()
-                                if formData.currentEditingSlot then
+                                if IsSubringAction(formData.currentEditingSlot) then
                                     return formData.currentEditingSlot.data
                                 else
                                     return 0
                                 end
                             end,
                             setFunc = function(value)
-                                if formData.currentEditingSlot then
+                                if IsSubringAction(formData.currentEditingSlot) then
                                     formData.currentEditingSlot.data = value
                                 end
                             end,
@@ -588,10 +609,33 @@ function ESOPie:InitializeSettings()
                 },
                 {
                     type = "submenu",
+                    name = "Command",
+                    disabled = function() return not IsCommandAction(formData.currentEditingSlot) end,
+                    controls = {
+                        {
+                            type = "editbox",
+                            name = "Command",
+                            tooltip = "Chat command or Lua code to execute when activated.",
+                            isMultiline = true,
+                            getFunc = function()
+                                if IsCommandAction(formData.currentEditingSlot) then
+                                    return formData.currentEditingSlot.data
+                                else
+                                    return ""
+                                end
+                            end,
+                            setFunc = function(value)
+                                if IsCommandAction(formData.currentEditingSlot) then
+                                    formData.currentEditingSlot.data = value
+                                end
+                            end,
+                        },
+                    }
+                },
+                {
+                    type = "submenu",
                     name = "Emote",
-                    disabled = function()
-                        return not (formData.currentEditingSlot and formData.currentEditingSlot.action == ESOPie.actions.ACTION_PLAYEMOTE)
-                    end,
+                    disabled = function() return not IsEmoteAction(formData.currentEditingSlot) end,
                     controls = {
                         {
                             type = "dropdown",
@@ -602,7 +646,7 @@ function ESOPie:InitializeSettings()
                             choices = formData.collectionCache.emoteCategoryNames,
                             choicesValues = formData.collectionCache.emoteCategoryValues,
                             getFunc = function()
-                                if formData.currentEditingSlot then
+                                if IsEmoteAction(formData.currentEditingSlot) then
                                     local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(formData.currentEditingSlot.data)
                                     if emoteInfo then
                                         formData.selectedEmoteCategory = emoteInfo.emoteCategory
@@ -624,25 +668,17 @@ function ESOPie:InitializeSettings()
                             choices = {},
                             choicesValues = {},
                             getFunc = function()
-                                if formData.currentEditingSlot then
+                                if IsEmoteAction(formData.currentEditingSlot) then
                                     return formData.currentEditingSlot.data
                                 else
                                     return 0
                                 end
                             end,
                             setFunc = function(value)
-                                if formData.currentEditingSlot then
+                                if IsEmoteAction(formData.currentEditingSlot) then
                                     formData.currentEditingSlot.data = value
                                 end
-                                RefreshEmotePreview()
                             end,
-                        },
-                        {
-                            type = "texture",
-                            image = "/esoui/art/help/help_tabicon_emotes_up.dds",
-                            imageWith = 64,
-                            imageHeight = 64,
-                            reference = "ESOPIE_SlotEdit_EmoteIcon",
                         },
                     },
                 },

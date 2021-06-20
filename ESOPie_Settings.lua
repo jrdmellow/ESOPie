@@ -150,29 +150,68 @@ local ESOPIE_DB_DEFAULT = {
 }
 
 local formData = {
+    initialized = false,
     nextUniqueID = 0,
     collectionCache = {
-        emoteCategories = {},
         emoteCategoryNames = {},
         emoteCategoryValues = {},
-        mountNames = {},
-        mountValues = {},
-        momentoNames = {},
-        momentoValues = {},
+        allyCategoryNames = {},
+        allyCategoryValues = {},
     },
-    iconCategoryNames = { "General", "Abilities", "Achievements", "Other" },
-    iconCategoryValues = { ESOPIE_ICON_CATEGORY_GENERAL, ESOPIE_ICON_CATEGORY_ABILITIES, ESOPIE_ICON_CATEGORY_ACHIEVEMENTS, ESOPIE_ICON_CATEGORY_OTHER },
     actionChoices = {},
     actionChoicesValues = {},
     ringChoices = {},
     ringChoicesValues = {},
     slotChoices = {},
     slotChoicesValues = {},
-    selectedEmoteCategory = 0,
-    selectedIconCategory = ESOPIE_ICON_CATEGORY_GENERAL,
+    selectedCollectionCategory = 0,
     currentEditingRing = {},
     currentEditingSlot = {}
 }
+
+local function GetCategoryFromData(actionType, data)
+    if actionType == ESOPie.actions.ACTION_PLAYEMOTE then
+        if data and type(data) == "number" then
+            local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(data)
+            if emoteInfo then
+                return emoteInfo.emoteCategory
+            end
+        end
+        return EMOTE_CATEGORY_CEREMONIAL
+    end
+    return 0
+end
+
+local function IsSubringAction(slot)
+    return slot and slot.action == ESOPie.actions.ACTION_SUBMENU
+end
+
+local function IsCommandAction(slot)
+    return slot and (slot.action == ESOPie.actions.ACTION_CHATEXEC or slot.action == ESOPie.actions.ACTION_CODEEXEC)
+end
+
+local function IsEmoteAction(slot)
+    return slot and slot.action == ESOPie.actions.ACTION_PLAYEMOTE
+end
+
+local function IsAllyAction(slot)
+    return slot and slot.action == ESOPie.actions.ACTION_SUMMONALLY
+end
+
+local function IsCollectableAction(slot)
+    return slot and (IsEmoteAction(slot) or IsAllyAction(slot))
+end
+
+local function CollectionHasCategory(slot)
+    if slot then
+        if      slot.action == ESOPie.actions.ACTION_PLAYEMOTE  then return true
+        elseif  slot.action == ESOPie.actions.ACTION_SUMMONALLY then return true
+        elseif  slot.action == ESOPie.actions.ACTION_SETMOUNT   then return true
+        elseif  slot.action == ESOPie.actions.ACTION_SETNCPET   then return true
+        end
+    end
+    return false
+end
 
 local function UpdateDropdown(controlName, choices, values, tooltips)
     local control = WINDOW_MANAGER:GetControlByName(controlName)
@@ -182,6 +221,18 @@ local function UpdateDropdown(controlName, choices, values, tooltips)
     end
     control:UpdateChoices(choices, values, tooltips)
     control:UpdateValue()
+end
+
+local function UpdateInternalCache()
+    ZO_ClearTable(formData.actionChoices)
+    ZO_ClearTable(formData.actionChoicesValues)
+    for _, action in pairs(ESOPie.supportedActions) do
+        if action and action > 0 then -- Don't include NOOP
+            local actionName = GetActionTypeString(action) or string.format("Invalid<%d>", action)
+            table.insert(formData.actionChoices, actionName)
+            table.insert(formData.actionChoicesValues, action)
+        end
+    end
 end
 
 local function UpdateCollectionsCache()
@@ -194,30 +245,65 @@ local function UpdateCollectionsCache()
         table.insert(cache.emoteCategoryNames, categoryName)
         table.insert(cache.emoteCategoryValues, category)
     end
-    UpdateDropdown("ESOPIE_SlotEdit_EmoteCategory", cache.emoteCategoryNames, cache.emoteCategoryValues)
-
-    ZO_ClearTable(cache.mountNames)
-    ZO_ClearTable(cache.mountValues)
-    -- COLLECTIBLE_CATEGORY_TYPE_MOUNT
-
-    ZO_ClearTable(cache.momentoNames)
-    ZO_ClearTable(cache.momentoValues)
-    -- COLLECTIBLE_CATEGORY_TYPE_MEMENTO
 end
 
-local function RebuildEmoteDropdown()
-    local emoteNames = {}
-    local emoteValues = {}
-    local emotesList = PLAYER_EMOTE_MANAGER:GetEmoteListForType(formData.selectedEmoteCategory)
-    for _, emote in pairs(emotesList) do
-        local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emote)
-        table.insert(emoteNames, emoteInfo.displayName)
-        table.insert(emoteValues, emoteInfo.emoteId)
+local function SelectInitialCollectionCategory()
+    if IsCollectableAction(formData.currentEditingSlot) and CollectionHasCategory(formData.currentEditingSlot) then
+        formData.selectedCollectionCategory = GetCategoryFromData(formData.currentEditingSlot.action, formData.currentEditingSlot.data)
+    else
+        formData.selectedCollectionCategory = 0
     end
-    UpdateDropdown("ESOPIE_SlotEdit_Emote", emoteNames, emoteValues)
 end
 
-local function RebuildDropdowns()
+local function SelectInitialSlotForEdit()
+    if formData.currentEditingRing then
+        formData.currentEditingSlot = FindEntryByIndex(1, formData.currentEditingRing.slots)
+        SelectInitialCollectionCategory()
+    else
+        formData.currentEditingSlot = nil
+    end
+end
+
+local function RebuildCollectionCategoryDropdown()
+    local names = {}
+    local values = {}
+    if formData.currentEditingSlot then
+        local actionType = formData.currentEditingSlot.action
+        if actionType == ESOPie.actions.ACTION_PLAYEMOTE then
+            names = formData.collectionCache.emoteCategoryNames
+            values = formData.collectionCache.emoteCategoryValues
+        elseif actionType == ESOPie.actions.ACTION_PLAYMOMENTO then
+        elseif actionType == ESOPie.actions.ACTION_SUMMONALLY then
+        elseif actionType == ESOPie.actions.ACTION_SETMOUNT then
+        elseif actionType == ESOPie.actions.ACTION_SETNCPET then
+        end
+    end
+    UpdateDropdown("ESOPIE_SlotEdit_CollectionCategory", names, values)
+end
+
+local function RebuildCollectionItemDropdown()
+    local names = {}
+    local values = {}
+    if formData.currentEditingSlot then
+        local actionType = formData.currentEditingSlot.action
+        if actionType == ESOPie.actions.ACTION_PLAYEMOTE then
+            local categoryId = formData.selectedCollectionCategory
+            local emotesList = PLAYER_EMOTE_MANAGER:GetEmoteListForType(categoryId)
+            if emotesList then
+                for _, emote in pairs(emotesList) do
+                    local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emote)
+                    table.insert(names, emoteInfo.displayName)
+                    table.insert(values, emoteInfo.emoteId)
+                end
+            else
+                LogDebug("No emote list")
+            end
+        end
+    end
+    UpdateDropdown("ESOPIE_SlotEdit_CollectionItem", names, values)
+end
+
+local function RebuildRingDropdowns()
     if not ESOPie.db then LogError("SavedVars DB not initialized.") return end
     ZO_ClearTable(formData.ringChoices)
     ZO_ClearTable(formData.ringChoicesValues)
@@ -228,7 +314,9 @@ local function RebuildDropdowns()
     UpdateDropdown("ESOPIE_General_RootRing", formData.ringChoices, formData.ringChoicesValues)
     UpdateDropdown("ESOPIE_RingEdit_Selection", formData.ringChoices, formData.ringChoicesValues)
     UpdateDropdown("ESOPIE_SlotEdit_Subring", formData.ringChoices, formData.ringChoicesValues)
+end
 
+local function RebuildSlotDropdowns()
     ZO_ClearTable(formData.slotChoices)
     ZO_ClearTable(formData.slotChoicesValues)
     if formData.currentEditingRing and formData.currentEditingRing.slots then
@@ -238,9 +326,13 @@ local function RebuildDropdowns()
         end
     end
     UpdateDropdown("ESOPIE_RingEdit_SlotSelection", formData.slotChoices, formData.slotChoicesValues)
+end
 
-    --ToggleSubmenu("ESOPie_RingEdit_Submenu", formData.currentlyEditingRing ~= nil)
-    --ToggleSubmenu("ESOPie_SlotEdit_Submenu", formData.currentEditingSlot ~= nil)
+local function RebuildAll()
+    RebuildRingDropdowns()
+    RebuildSlotDropdowns()
+    RebuildCollectionCategoryDropdown()
+    RebuildCollectionItemDropdown()
 end
 
 -------------------------------------------------------------------------------
@@ -286,43 +378,34 @@ function ESOPie:InitializeSettings()
         LogVerbose("OnPanelCreated")
         InitNextID()
         UpdateCollectionsCache()
-        RebuildDropdowns()
+        RebuildAll()
+        formData.initialized = true
     end
 
-    local function OnPanelRefreshed(panel)
-        if panel ~= ESOPie.LAMPanel then return end
-        if formData.nextUniqueID > 1 then -- panel has been created
-            LogVerbose("OnPanelRefreshed")
-            RebuildDropdowns()
+    local function CreateNewSlot()
+        if formData.currentEditingRing then
+            local newSlotInfo = {}
+            ZO_DeepTableCopy(ESOPIE_DEFAULT_SLOTINFO, newSlotInfo)
+            newSlotInfo.uniqueid = GetNextID()
+            table.insert(formData.currentEditingRing.slots, newSlotInfo)
+            formData.currentEditingSlot = newSlotInfo
         end
     end
 
-    local function IsSubringAction(slot)
-        return slot and slot.action == ESOPie.actions.ACTION_SUBMENU
+    local function CreateNewRing()
+        local newRing = {}
+        ZO_DeepTableCopy(ESOPIE_DEFAULT_RING, newRing)
+        newRing.uniqueid = GetNextID()
+        table.insert(saveData.rings, newRing)
+        formData.currentEditingRing = newRing
+        CreateNewSlot()
     end
 
-    local function IsCommandAction(slot)
-        return slot and (slot.action == ESOPie.actions.ACTION_CHATEXEC or slot.action == ESOPie.actions.ACTION_CODEEXEC)
-    end
-
-    local function IsEmoteAction(slot)
-        return slot and slot.action == ESOPie.actions.ACTION_PLAYEMOTE
-    end
-
-    InitNextID()
-
-    ZO_ClearTable(formData.actionChoices)
-    ZO_ClearTable(formData.actionChoicesValues)
-    for _, action in pairs(ESOPie.supportedActions) do
-        if action and action > 0 then -- Don't include NOOP
-            local actionName = GetActionTypeString(action) or string.format("Invalid<%d>", action)
-            table.insert(formData.actionChoices, actionName)
-            table.insert(formData.actionChoicesValues, action)
-        end
-    end
+    UpdateInternalCache()
+    UpdateCollectionsCache()
 
     formData.currentEditingRing = FindEntryByID(saveData.rootRing, saveData.rings)
-    formData.currentEditingSlot = nil
+    SelectInitialSlotForEdit()
 
     local optionsTable = {
         -- TODO: Localize
@@ -355,11 +438,12 @@ function ESOPie:InitializeSettings()
             end,
         },
         {
-            type = "divider"
+            type = "header",
+            name = "Configure Ring",
         },
         {
             type = "dropdown",
-            name = "Configure Ring",
+            name = "Edit Ring",
             tooltip = "Select the ring to configure.",
             choices = formData.ringChoices,
             choicesValues = formData.ringChoicesValues,
@@ -374,8 +458,8 @@ function ESOPie:InitializeSettings()
             end,
             setFunc = function(value)
                 formData.currentEditingRing = FindEntryByID(value, saveData.rings)
-                formData.currentEditingSlot = nil
-                RebuildDropdowns()
+                SelectInitialSlotForEdit()
+                RebuildAll()
             end,
             default = function()
                 local rootRing = FindEntryByID(saveData.rootRing, saveData.rings)
@@ -387,105 +471,123 @@ function ESOPie:InitializeSettings()
             end,
         },
         {
+            type = "editbox",
+            name = "Ring Name",
+            tooltip = "Ring name.",
+            isMultiline = false,
+            reference = "ESOPIE_RingEdit_Name",
+            disabled = function() return formData.currentEditingRing == nil end,
+            getFunc = function()
+                if formData.currentEditingRing then
+                    return formData.currentEditingRing.name
+                end
+                return ""
+            end,
+            setFunc = function(value)
+                if formData.currentEditingRing then
+                    formData.currentEditingRing.name = value
+                    RebuildRingDropdowns()
+                end
+            end,
+        },
+        {
             type = "button",
             name = "New Ring",
             tooltip = "Add a new ring. Note: Unless the new ring is set as Root Ring you will need to reference the ring with a Open Subring slot action to access it.",
-            width = "full",
+            width = "half",
             func = function()
-                local newRing = {}
-                ZO_DeepTableCopy(ESOPIE_DEFAULT_RING, newRing)
-                newRing.uniqueid = GetNextID()
-                table.insert(saveData.rings, newRing)
-                formData.currentEditingRing = newRing
-                formData.currentEditingSlot = nil
-                RebuildDropdowns()
+                CreateNewRing()
+                SelectInitialSlotForEdit()
+                RebuildAll()
             end,
         },
-        -----------------------------------------------------------------------
         {
-            type = "submenu",
-            name = "Configure Selected Ring",
-            reference = "ESOPie_RingEdit_Submenu",
+            type = "button",
+            name = "Remove Ring",
+            width = "half",
             disabled = function() return formData.currentEditingRing == nil end,
-            controls = {
-                {
-                    type = "editbox",
-                    name = "Ring Name",
-                    tooltip = "Ring name.",
-                    isMultiline = false,
-                    reference = "ESOPIE_RingEdit_Name",
-                    getFunc = function()
-                        if formData.currentEditingRing then
-                            return formData.currentEditingRing.name
-                        end
-                        return ""
-                    end,
-                    setFunc = function(value)
-                        if formData.currentEditingRing then
-                            formData.currentEditingRing.name = value
-                        end
-                        RebuildDropdowns()
-                    end,
-                },
-                {
-                    type = "button",
-                    name = "Remove Ring",
-                    width = "full",
-                    func = function()
-                        if formData.currentEditingRing then
-                            local ringIndex = FindEntryIndexByID(formData.currentEditingRing.uniqueid, saveData.rings)
-                            if ringIndex then
-                                table.remove(saveData.rings, ringIndex)
-                            end
-                            formData.currentlyEditingRing = nil
-                            formData.currentEditingSlot  = nil
-                            RebuildDropdowns()
-                        end
-                    end,
-                },
-                {
-                    type = "dropdown",
-                    name = "Configure Slot",
-                    tooltip = "Select the slot to edit.",
-                    scrollable = true,
-                    sort = "value-up",
-                    reference = "ESOPIE_RingEdit_SlotSelection",
-                    choices = formData.slotChoices,
-                    choicesValues = formData.slotChoicesValues,
-                    getFunc = function()
-                        if formData.currentEditingSlot then
-                            return formData.currentEditingSlot.uniqueid
-                        else
-                            return 0
-                        end
-                    end,
-                    setFunc = function(value)
-                        if formData.currentEditingRing then
-                            formData.currentEditingSlot = FindEntryByID(value, formData.currentEditingRing.slots)
-                            RebuildDropdowns()
-                        end
-                    end,
-                },
-                {
-                    type = "button",
-                    name = "New Slot",
-                    tooltip = "Add a new slot to this ring.",
-                    width = "full",
-                    func = function()
-                        if formData.currentEditingRing then
-                            local newSlotInfo = {}
-                            ZO_DeepTableCopy(ESOPIE_DEFAULT_SLOTINFO, newSlotInfo)
-                            newSlotInfo.uniqueid = GetNextID()
-                            table.insert(formData.currentEditingRing.slots, newSlotInfo)
-                            formData.currentEditingSlot = newSlotInfo
-                            RebuildDropdowns()
-                        end
-                    end,
-                },
-            },
+            func = function()
+                if formData.currentEditingRing then
+                    local ringIndex = FindEntryIndexByID(formData.currentEditingRing.uniqueid, saveData.rings)
+                    if ringIndex then
+                        table.remove(saveData.rings, ringIndex)
+                    end
+                    formData.currentEditingRing = FindEntryByIndex(1, saveData.rings)
+                    SelectInitialSlotForEdit()
+                    RebuildAll()
+                end
+            end,
         },
          -----------------------------------------------------------------------
          {
+            type = "divider"
+         },
+         {
+            type = "dropdown",
+            name = "Edit Slot",
+            tooltip = "Select the slot to edit.",
+            scrollable = true,
+            sort = "value-up",
+            reference = "ESOPIE_RingEdit_SlotSelection",
+            choices = formData.slotChoices,
+            choicesValues = formData.slotChoicesValues,
+            disabled = function() return formData.currentEditingRing == nil end,
+            getFunc = function()
+                if formData.currentEditingSlot then
+                    return formData.currentEditingSlot.uniqueid
+                else
+                    return 0
+                end
+            end,
+            setFunc = function(value)
+                if formData.currentEditingRing then
+                    formData.currentEditingSlot = FindEntryByID(value, formData.currentEditingRing.slots)
+                end
+                SelectInitialCollectionCategory()
+                if IsCollectableAction(formData.currentEditingSlot) then
+                    RebuildCollectionCategoryDropdown()
+                    RebuildCollectionItemDropdown()
+                end
+            end,
+        },
+        {
+            type = "button",
+            name = "New Slot",
+            tooltip = "Add a new slot to this ring.",
+            width = "half",
+            disabled = function() return formData.currentEditingRing == nil end,
+            func = function()
+                CreateNewSlot()
+                SelectInitialCollectionCategory()
+                RebuildSlotDropdowns()
+                if IsCollectableAction(formData.currentEditingSlot) then
+                    RebuildCollectionCategoryDropdown()
+                    RebuildCollectionItemDropdown()
+                end
+            end,
+        },
+        {
+            type = "button",
+            name = "Remove Slot",
+            tooltip = "Remove the selected slot from this ring.",
+            width = "half",
+            disabled = function() return formData.currentEditingRing == nil end,
+            func = function()
+                if formData.currentEditingSlot and formData.currentEditingRing then
+                    local slotIndex = FindEntryIndexByID(formData.currentEditingSlot.uniqueid, formData.currentEditingRing.slots)
+                    if slotIndex then
+                        table.remove(formData.currentEditingRing.slots, slotIndex)
+                    end
+                    SelectInitialSlotForEdit()
+                    RebuildSlotDropdowns()
+                    if IsCollectableAction(formData.currentEditingSlot) then
+                        RebuildCollectionCategoryDropdown()
+                        RebuildCollectionItemDropdown()
+                    end
+                end
+            end,
+        },
+        {
             type = "submenu",
             name = "Configure Selected Slot",
             reference = "ESOPie_SlotEdit_Submenu",
@@ -506,8 +608,8 @@ function ESOPie:InitializeSettings()
                     setFunc = function(value)
                         if formData.currentEditingSlot then
                             formData.currentEditingSlot.name = value
+                            RebuildSlotDropdowns()
                         end
-                        RebuildDropdowns()
                     end,
                 },
                 {
@@ -531,7 +633,6 @@ function ESOPie:InitializeSettings()
                             formData.currentEditingSlot.icon = value
                         end
                     end,
-                    beforeShow = function(control, iconPicker) return preventShow end,
                 },
                 {
                     type = "editbox",
@@ -574,6 +675,11 @@ function ESOPie:InitializeSettings()
                             formData.currentEditingSlot.action = value
                             formData.currentEditingSlot.data = nil
                         end
+                        SelectInitialCollectionCategory()
+                        if IsCollectableAction(formData.currentEditingSlot) then
+                            RebuildCollectionCategoryDropdown()
+                            RebuildCollectionItemDropdown()
+                        end
                     end,
                 },
                 {
@@ -615,7 +721,7 @@ function ESOPie:InitializeSettings()
                             tooltip = "Chat command or Lua code to execute when activated.",
                             isMultiline = true,
                             getFunc = function()
-                                if IsCommandAction(formData.currentEditingSlot) then
+                                if IsCommandAction(formData.currentEditingSlot) and type(formData.currentEditingSlot.data) == "string" then
                                     return formData.currentEditingSlot.data
                                 else
                                     return ""
@@ -631,48 +737,48 @@ function ESOPie:InitializeSettings()
                 },
                 {
                     type = "submenu",
-                    name = "Emote",
-                    disabled = function() return not IsEmoteAction(formData.currentEditingSlot) end,
+                    name = "Collection",
+                    disabled = function() return not IsCollectableAction(formData.currentEditingSlot) end,
                     controls = {
                         {
                             type = "dropdown",
                             name = "Category",
-                            tooltip = "Emote category to select from.",
-                            reference = "ESOPIE_SlotEdit_EmoteCategory",
+                            tooltip = "Collectable category to select from.",
+                            reference = "ESOPIE_SlotEdit_CollectionCategory",
                             sort = "name-up",
-                            choices = formData.collectionCache.emoteCategoryNames,
-                            choicesValues = formData.collectionCache.emoteCategoryValues,
+                            choices = {},
+                            choicesValues = {},
+                            disabled = function() return not (IsCollectableAction(formData.currentEditingSlot) and CollectionHasCategory(formData.currentEditingSlot)) end,
                             getFunc = function()
-                                if IsEmoteAction(formData.currentEditingSlot) then
-                                    local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(formData.currentEditingSlot.data)
-                                    if emoteInfo then
-                                        formData.selectedEmoteCategory = emoteInfo.emoteCategory
-                                    end
+                                if IsCollectableAction(formData.currentEditingSlot) then
+                                    local categoryId = GetCategoryFromData(formData.currentEditingSlot.action, formData.currentEditingSlot.data)
+                                    return categoryId
                                 end
-                                return formData.selectedEmoteCategory
+                                return 0
                             end,
                             setFunc = function(value)
-                                formData.selectedEmoteCategory = value
-                                RebuildEmoteDropdown()
+                                if IsCollectableAction(formData.currentEditingSlot) then
+                                    formData.selectedCollectionCategory = value
+                                end
                             end,
                         },
                         {
                             type = "dropdown",
                             name = "Emote",
                             tooltip = "Emote to use when activated.",
-                            reference = "ESOPIE_SlotEdit_Emote",
+                            reference = "ESOPIE_SlotEdit_CollectionItem",
                             sort = "name-up",
                             choices = {},
                             choicesValues = {},
                             getFunc = function()
-                                if IsEmoteAction(formData.currentEditingSlot) then
+                                if IsCollectableAction(formData.currentEditingSlot) and type(formData.currentEditingSlot.data) == "number" then
                                     return formData.currentEditingSlot.data
                                 else
                                     return 0
                                 end
                             end,
                             setFunc = function(value)
-                                if IsEmoteAction(formData.currentEditingSlot) then
+                                if IsCollectableAction(formData.currentEditingSlot) then
                                     formData.currentEditingSlot.data = value
                                 end
                             end,
@@ -701,7 +807,7 @@ function ESOPie:InitializeSettings()
     LAM:RegisterOptionControls(ESOPie.settingsPanelName, optionsTable)
 
     CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnPanelCreated)
-    CALLBACK_MANAGER:RegisterCallback("LAM-RefreshPanel", OnPanelRefreshed)
+    --CALLBACK_MANAGER:RegisterCallback("LAM-RefreshPanel", OnPanelRefreshed)
     --CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", MyLAMPanelOpened)
     --CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", MyLAMPanelClosed)
 end

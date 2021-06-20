@@ -32,6 +32,13 @@ function FindEntryByName(name, haystack)
     return nil
 end
 
+function FindEntryByIndex(index, haystack)
+    if index and haystack then
+        return haystack[index]
+    end
+    return nil
+end
+
 function FindEntryIndexByID(id, haystack)
     if id and haystack then
         for i, entry in pairs(haystack) do

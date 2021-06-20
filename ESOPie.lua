@@ -199,7 +199,18 @@ function ESOPie:Initialize()
     RegisterHandler(self.actions.ACTION_SETMOUNT, function(data) self:ExecuteSetMount(data) end)
     RegisterHandler(self.actions.ACTION_SETNCPET, function(data) self:ExecuteSetNCPet(data) end)
 
-    LogVerbose("%d handlers registered for %d actions.", #self.executionCallbacks, #self.actions)
+    local actionsSize = 0
+    for _, action in pairs(self.actions) do
+        actionsSize = actionsSize + 1
+    end
+    local actionNamesSize = table.getn(self.actionNames)
+    local callbacksSize = table.getn(self.executionCallbacks)
+    if actionsSize ~= callbacksSize then
+        LogWarning("Action and execution callback size mismatch (%d : %d).", actionsSize, callbacksSize)
+    end
+    if actionsSize ~= actionNamesSize then
+        LogWarning("Action and names size mismatch (%d : %d).", actionsSize, actionNamesSize)
+    end
     LogInfo("%s %s initalized.", self.name, self.version)
 end
 

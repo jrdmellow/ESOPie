@@ -29,6 +29,13 @@ ESOPie.actionNames = {
     L(ESOPIE_ACTION_GOTOHOME),
     L(ESOPIE_ACTION_PLAYEMOTE),
 }
+-- Temporary: Limit visible actions and sort
+ESOPie.supportedActions = {
+    ESOPie.actions.ACTION_NOOP,
+    ESOPie.actions.ACTION_PLAYEMOTE,
+    ESOPie.actions.ACTION_CHATEXEC,
+    ESOPie.actions.ACTION_SUBMENU,
+}
 ESOPie.showCancelButton = false
 ESOPie.maxVisibleSlots = 8
 ESOPie.displayedRing = nil

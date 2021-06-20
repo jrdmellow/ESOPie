@@ -255,7 +255,7 @@ function ESOPie:InitializeSettings()
 
     ZO_ClearTable(formData.actionChoices)
     ZO_ClearTable(formData.actionChoicesValues)
-    for _, action in pairs(ESOPie.actions) do
+    for _, action in pairs(ESOPie.supportedActions) do
         if action and action > 0 then -- Don't include NOOP
             local actionName = GetActionTypeString(action) or string.format("Invalid<%d>", action)
             table.insert(formData.actionChoices, actionName)
@@ -501,7 +501,7 @@ function ESOPie:InitializeSettings()
                     type = "dropdown",
                     name = "Slot Action",
                     tooltip = "Select the action that should occur when this slot is activated.",
-                    sort = "value-up",
+                    --sort = "value-up",
                     choices = formData.actionChoices,
                     choicesValues = formData.actionChoicesValues,
                     getFunc = function()

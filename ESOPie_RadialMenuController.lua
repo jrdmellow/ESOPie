@@ -163,8 +163,8 @@ function ESOPie_RadialMenuController:NavigateCurrentSelection()
     self.onSlotNavigateCallback(self.currentSelectedEntry)
 end
 
-function ESOPie_RadialMenuController:AddSlot(name, inactiveIcon, activeIcon)
-    self.menu:AddEntry(name, inactiveIcon, activeIcon, function() self:ActivateCurrentSelection() end, {name=name})
+function ESOPie_RadialMenuController:AddSlot(name, inactiveIcon, activeIcon, uniqueid)
+    self.menu:AddEntry(name, inactiveIcon, activeIcon, function() self:ActivateCurrentSelection() end, {name=name, uniqueid=uniqueid})
 end
 
 

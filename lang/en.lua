@@ -19,9 +19,13 @@ local strings = {
     ESOPIE_ACTION_NOOP                          = "No Action",
     ESOPIE_ACTION_SUBRING                       = "Open Subring",
     ESOPIE_ACTION_CHATEXEC                      = "Execute Chat Command",
-    ESOPIE_ACTION_CODEEXEC                      = "Execute Code",
+    ESOPIE_ACTION_CODEEXEC                      = "Execute Lua Code",
     ESOPIE_ACTION_GOTOHOME                      = "Go Home",
     ESOPIE_ACTION_PLAYEMOTE                     = "Play Emote",
+    ESOPIE_ACTION_PLAYMOMENTO                   = "Play Momento",
+    ESOPIE_ACTION_SUMMONALLY                    = "Summon Ally",
+    ESOPIE_ACTION_SETMOUNT                      = "Change Mount",
+    ESOPIE_ACTION_SETNCPET                      = "Change Non-Combat Pet",
 
     -- Bindings
     ESOPIE_BINDING_INTERACTIONLAYER             = "ESOPie",

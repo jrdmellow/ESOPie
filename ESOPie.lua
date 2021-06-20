@@ -20,26 +20,37 @@ ESOPie.actions = {
     ACTION_CODEEXEC = 4,
     ACTION_GOTOHOME = 5,
     ACTION_PLAYEMOTE = 6,
+    ACTION_PLAYMOMENTO = 7,
+    ACTION_SUMMONALLY = 8,
+    ACTION_SETMOUNT = 9,
+    ACTION_SETNCPET = 10,
 }
 ESOPie.actionNames = {
-    L(ESOPIE_ACTION_NOOP),
-    L(ESOPIE_ACTION_SUBRING),
-    L(ESOPIE_ACTION_CHATEXEC),
-    L(ESOPIE_ACTION_CODEEXEC),
-    L(ESOPIE_ACTION_GOTOHOME),
-    L(ESOPIE_ACTION_PLAYEMOTE),
+    [ESOPie.actions.ACTION_NOOP]            = L(ESOPIE_ACTION_NOOP),
+    [ESOPie.actions.ACTION_SUBMENU]         = L(ESOPIE_ACTION_SUBRING),
+    [ESOPie.actions.ACTION_CHATEXEC]        = L(ESOPIE_ACTION_CHATEXEC),
+    [ESOPie.actions.ACTION_CODEEXEC]        = L(ESOPIE_ACTION_CODEEXEC),
+    [ESOPie.actions.ACTION_GOTOHOME]        = L(ESOPIE_ACTION_GOTOHOME),
+    [ESOPie.actions.ACTION_PLAYEMOTE]       = L(ESOPIE_ACTION_PLAYEMOTE),
+    [ESOPie.actions.ACTION_PLAYMOMENTO]     = L(ESOPIE_ACTION_PLAYMOMENTO),
+    [ESOPie.actions.ACTION_SUMMONALLY]      = L(ESOPIE_ACTION_SUMMONALLY),
+    [ESOPie.actions.ACTION_SETMOUNT]        = L(ESOPIE_ACTION_SETMOUNT),
+    [ESOPie.actions.ACTION_SETNCPET]        = L(ESOPIE_ACTION_SETNCPET),
 }
 -- Temporary: Limit visible actions and sort
 ESOPie.supportedActions = {
     ESOPie.actions.ACTION_NOOP,
-    ESOPie.actions.ACTION_PLAYEMOTE,
-    ESOPie.actions.ACTION_CHATEXEC,
     ESOPie.actions.ACTION_SUBMENU,
+    ESOPie.actions.ACTION_PLAYEMOTE,
+    ESOPie.actions.ACTION_SUMMONALLY,
+    ESOPie.actions.ACTION_CHATEXEC,
+    --ESOPie.actions.ACTION_CODEEXEC,
 }
 ESOPie.showCancelButton = false
 ESOPie.maxVisibleSlots = 8
 ESOPie.displayedRing = nil
 ESOPie.selectedSlotInfo = nil
+ESOPie.executionCallbacks = {}
 
 local LOG_LEVEL_VERBOSE = "V"
 local LOG_LEVEL_DEBUG = "D"
@@ -100,19 +111,8 @@ local LogWarning = ESOPie.LogWarning
 local LogError = ESOPie.LogError
 local Notify = ESOPie.Notify
 
-
 -------------------------------------------------------------------------------
 -- ESOPie Handler
-
-function ESOPie:Initialize()
-    self.InitializeSettings()
-    self.pieRoot = ESOPie_RadialMenuController:New(ESOPie_UI_Root, "ESOPie_EntryTemplate", self.radialAnimation, self.entryAnimation)
-    self.pieRoot:SetSlotActivateCallback(function(selectedEntry) self:OnSlotActivate(selectedEntry) end)
-    self.pieRoot:SetSlotNavigateCallback(function(selectedEntry) self:OnSlotNavigate(selectedEntry) end)
-    self.pieRoot:SetPopulateSlotsCallback(function() self:OnPopulateSlots() end)
-
-    LogInfo("%s %s initalized.", ESOPie.name, ESOPie.version)
-end
 
 function ESOPie:ExecuteChatCommand(commandStr)
     if not commandStr then Notify("Slot has no chat command to execute.") return end
@@ -141,30 +141,66 @@ function ESOPie:ExecuteChatCommand(commandStr)
 end
 
 function ESOPie:ExecuteCustomCommand(luaCode)
-    if not commandStr then Notify("Slot has no code to execute.") return end
+    if not luaCode then Notify("Slot has no code to execute.") return end
     LogWarning("Custom command -- TODO")
 end
 
-function ESOPie:ExecuteEmote(emoteId)
-    if not emoteId or type(emoteId) ~= "number" then LogWarning("Payload is invalid.") return end
-    local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emoteId)
+function ESOPie:ExecuteEmote(itemId)
+    if not itemId or type(itemId) ~= "number" then LogWarning("Payload is invalid.") return end
+    local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(itemId)
     if emoteInfo then
         PlayEmoteByIndex(emoteInfo.emoteIndex)
     end
 end
 
-function ESOPie:ExecuteCallback(slotInfo)
-    if slotInfo.action == ESOPie.actions.ACTION_NOOP or slotInfo.action == ESOPie.actions.ACTION_SUBMENU then return end
-    LogVerbose("%s(%s): %s", slotInfo.name, GetActionTypeString(slotInfo.action), slotInfo.data)
-    if slotInfo.action == ESOPie.actions.ACTION_CHATEXEC then
-        self:ExecuteChatCommand(slotInfo.data)
-    elseif slotInfo.action == ESOPie.actions.ACTION_CODEEXEC then
-        self:ExecuteCustomCommand(slotInfo.data)
-    elseif slotInfo.action == ESOPie.actions.ACTION_PLAYEMOTE then
-        self:ExecuteEmote(slotInfo.data)
-    else
-        LogDebug("Unhandled action %s", GetActionTypeString(slotInfo.action))
+function ESOPie:ExecuteMomento(itemId)
+    LogWarning("TODO: ExecuteMomento<%s>", tostring(itemId))
+end
+
+function ESOPie:ExecuteSummonAlly(itemId)
+    LogWarning("TODO: ExecuteSummonAlly<%s>", tostring(itemId))
+end
+
+function ESOPie:ExecuteSetMount(itemId)
+    LogWarning("TODO: ExecuteSetMount<%s>", tostring(itemId))
+end
+
+function ESOPie:ExecuteSetNCPet(itemId)
+    LogWarning("TODO: ExecuteSetNCPet<%s>", tostring(itemId))
+end
+
+function ESOPie:Initialize()
+    self.InitializeSettings()
+    self.pieRoot = ESOPie_RadialMenuController:New(ESOPie_UI_Root, "ESOPie_EntryTemplate", self.radialAnimation, self.entryAnimation)
+    self.pieRoot:SetSlotActivateCallback(function(selectedEntry) self:OnSlotActivate(selectedEntry) end)
+    self.pieRoot:SetSlotNavigateCallback(function(selectedEntry) self:OnSlotNavigate(selectedEntry) end)
+    self.pieRoot:SetPopulateSlotsCallback(function() self:OnPopulateSlots() end)
+
+    local function RegisterHandler(action, handler)
+        if self.executionCallbacks[action] then
+            LogError("Handler already registered for %s", GetActionTypeString(action))
+            return
+        end
+        if type(handler) ~= "function" then
+            LogError("Handler is not a function for %s", GetActionTypeString(action))
+            return
+        end
+        self.executionCallbacks[action] = handler
     end
+
+    RegisterHandler(self.actions.ACTION_NOOP, function(data) end) -- Do nothing.
+    RegisterHandler(self.actions.ACTION_SUBMENU, function(data) end) -- Do nothing; handled by navigate callback.
+    RegisterHandler(self.actions.ACTION_CHATEXEC, function(data) self:ExecuteChatCommand(data) end)
+    RegisterHandler(self.actions.ACTION_CODEEXEC, function(data) self:ExecuteCustomCommand(data) end)
+    RegisterHandler(self.actions.ACTION_GOTOHOME, function(data) self:ExecuteGoToHome(data) end)
+    RegisterHandler(self.actions.ACTION_PLAYEMOTE, function(data) self:ExecuteEmote(data) end)
+    RegisterHandler(self.actions.ACTION_PLAYMOMENTO, function(data) self:ExecuteMomento(data) end)
+    RegisterHandler(self.actions.ACTION_SUMMONALLY, function(data) self:ExecuteSummonAlly(data) end)
+    RegisterHandler(self.actions.ACTION_SETMOUNT, function(data) self:ExecuteSetMount(data) end)
+    RegisterHandler(self.actions.ACTION_SETNCPET, function(data) self:ExecuteSetNCPet(data) end)
+
+    LogVerbose("%d handlers registered for %d actions.", #self.executionCallbacks, #self.actions)
+    LogInfo("%s %s initalized.", self.name, self.version)
 end
 
 function ESOPie:GetRing(id)
@@ -200,7 +236,14 @@ end
 function ESOPie:OnSlotActivate(selectedEntry)
     local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for activate") return end
-    self:ExecuteCallback(slotInfo)
+
+    local handler = self.executionCallbacks[slotInfo.action]
+    if handler then
+        LogVerbose("%s => %s (%s)", slotInfo.name, GetActionTypeString(slotInfo.action), slotInfo.data)
+        handler(slotInfo.data)
+    else
+        LogDebug("Unhandled action %s", GetActionTypeString(slotInfo.action))
+    end
 end
 
 function ESOPie:OnSlotNavigate(selectedEntry)

@@ -497,7 +497,6 @@ function ESOPie:InitializeSettings()
                     tooltip = "",
                     isMultiline = false,
                     getFunc = function()
-                        d("Slot Name")
                         if formData.currentEditingSlot then
                             return formData.currentEditingSlot.name
                         else
@@ -522,7 +521,6 @@ function ESOPie:InitializeSettings()
                     width = "full",
                     choices = ESOPIE_ICON_LIBRARY,
                     getFunc = function()
-                        d("Slot Icon (Browser)")
                         if formData.currentEditingSlot then
                             return formData.currentEditingSlot.icon
                         end
@@ -541,7 +539,6 @@ function ESOPie:InitializeSettings()
                     tooltip = "Any icon can be used if you know the path.",
                     isMultiline = false,
                     getFunc = function()
-                        d("Slot Icon (Path)")
                         if formData.currentEditingSlot then
                             return formData.currentEditingSlot.icon
                         else

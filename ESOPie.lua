@@ -148,7 +148,9 @@ end
 function ESOPie:ExecuteEmote(emoteId)
     if not emoteId or type(emoteId) ~= "number" then LogWarning("Payload is invalid.") return end
     local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emoteId)
-    PlayEmoteByIndex(emoteInfo.emoteIndex)
+    if emoteInfo then
+        PlayEmoteByIndex(emoteInfo.emoteIndex)
+    end
 end
 
 function ESOPie:ExecuteCallback(slotInfo)

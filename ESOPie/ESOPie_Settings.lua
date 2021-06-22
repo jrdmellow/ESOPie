@@ -426,8 +426,9 @@ function ESOPie:InitializeSettings()
             newSlotInfo.uniqueid = GetNextID()
             table.insert(saveData.entries, newSlotInfo)
             table.insert(ui.currentEditing.slots, newSlotInfo.uniqueid)
-            ui.currentEditing = newSlotInfo
+            return newRing
         end
+        return nil
     end
 
     local function CreateNewRing()
@@ -435,7 +436,7 @@ function ESOPie:InitializeSettings()
         ZO_DeepTableCopy(ESOPIE_DEFAULT_RING, newRing)
         newRing.uniqueid = GetNextID()
         table.insert(saveData.entries, newRing)
-        ui.currentEditing = newRing
+        return newRing
     end
 
     UpdateInternalCache()
@@ -546,7 +547,7 @@ function ESOPie:InitializeSettings()
             tooltip = "Add a new ring.\nNote: You will need to either set a binding or create a sub-ring slot to access the new ring.",
             width = "half",
             func = function()
-                CreateNewRing()
+                ui.currentEditing = CreateNewRing()
                 RebuildAll()
             end,
         },

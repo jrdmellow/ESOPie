@@ -12,165 +12,171 @@ local Notify = ESOPie.Notify
 
 local ESOPIE_DEFAULT_RING = {
     uniqueid = 0,
+    type = ESOPie.EntryType.Ring,
     name = L(ESOPIE_DEFAULT_RINGNAME),
     slots = {}
 }
 local ESOPIE_DEFAULT_SLOTINFO = {
     uniqueid = 0,
+    type = ESOPie.EntryType.Slot,
     name = L(ESOPIE_DEFAULT_ACTIONNAME),
-    icon = ESOPIE_ICON_SLOT_DEFUALT,
-    action = ESOPie.actions.ACTION_NOOP,
+    icon = ESOPIE_ICON_SLOT_DEFAULT,
+    action = ESOPie.Action.Noop,
     data = nil
 }
 local ESOPIE_DB_DEFAULT = {
-    ["rings"] =
+    ["entries"] =
     {
-        [1] =
+        --- SLOTS
         {
             ["uniqueid"] = 1,
-            ["name"] = "Root",
-            ["slots"] =
-            {
-                [1] =
-                {
-                    ["uniqueid"] = 2,
-                    ["name"] = "Social",
-                    ["action"] = 2,
-                    ["icon"] = "/esoui/art/icons/ability_debuff_silence.dds",
-                    ["data"] = 12,
-                },
-                [2] =
-                {
-                    ["uniqueid"] = 3,
-                    ["name"] = "Show Off",
-                    ["action"] = 2,
-                    ["icon"] = "/esoui/art/icons/ability_debuff_levitate.dds",
-                    ["data"] = 9,
-                },
-                [3] =
-                {
-                    ["uniqueid"] = 4,
-                    ["name"] = "Music",
-                    ["action"] = 2,
-                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musiclute001.dds",
-                    ["data"] = 5,
-                },
-            },
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Social",
+            ["action"] = ESOPie.Action.Submenu,
+            ["icon"] = "/esoui/art/icons/ability_debuff_silence.dds",
+            ["data"] = 15,
         },
-        [2] =
+        {
+            ["uniqueid"] = 2,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Show Off",
+            ["action"] = ESOPie.Action.Submenu,
+            ["icon"] = "/esoui/art/icons/ability_debuff_levitate.dds",
+            ["data"] = 14,
+        },
+        {
+            ["uniqueid"] = 3,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Music",
+            ["action"] = ESOPie.Action.Submenu,
+            ["icon"] = "/esoui/art/icons/housing_bre_inc_musiclute001.dds",
+            ["data"] = 13,
+        },
+        {
+            ["uniqueid"] = 4,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Play Lute",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/housing_bre_inc_musiclute001.dds",
+            ["data"] = 5,
+        },
         {
             ["uniqueid"] = 5,
-            ["name"] = "Music",
-            ["slots"] =
-            {
-                [1] =
-                {
-                    ["uniqueid"] = 6,
-                    ["name"] = "Play Lute",
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musiclute001.dds",
-                    ["data"] = 5,
-                },
-                [2] =
-                {
-                    ["uniqueid"] = 7,
-                    ["name"] = "Play Drums",
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musicdrum001.dds",
-                    ["data"] = 7,
-                },
-                [3] =
-                {
-                    ["uniqueid"] = 8,
-                    ["name"] = "Play Flute",
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/housing_bre_inc_musicrecorder001.dds",
-                    ["data"] = 6,
-                },
-            },
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Play Drums",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/housing_bre_inc_musicdrum001.dds",
+            ["data"] = 7,
         },
-        [3] =
+        {
+            ["uniqueid"] = 6,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Play Flute",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/housing_bre_inc_musicrecorder001.dds",
+            ["data"] = 6,
+        },
+        {
+            ["uniqueid"] = 7,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Scorch",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/ability_companion_mageguild_001.dds",
+            ["data"] = 611,
+        },
+        {
+            ["uniqueid"] = 8,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Flex",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/emote_flex.dds",
+            ["data"] = 468,
+        },
         {
             ["uniqueid"] = 9,
-            ["name"] = "Show Off",
-            ["slots"] =
-            {
-                [1] =
-                {
-                    ["uniqueid"] = 10,
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/ability_companion_mageguild_001.dds",
-                    ["data"] = 611,
-                    ["name"] = "Scorch",
-                },
-                [2] =
-                {
-                    ["uniqueid"] = 11,
-                    ["name"] = "Flex",
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/emote_flex.dds",
-                    ["data"] = 468,
-                },
-            },
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Greet",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/ability_companion_nightblade_013.dds",
+            ["data"] = 162,
         },
-        [4] =
+        {
+            ["uniqueid"] = 10,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Clap",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/ability_companion_restorationstaff_002.dds",
+            ["data"] = 185,
+        },
+        {
+            ["uniqueid"] = 11,
+            ["type"] = ESOPie.EntryType.Slot,
+            ["name"] = "Congratulate",
+            ["action"] = ESOPie.Action.PlayEmote,
+            ["icon"] = "/esoui/art/icons/ability_buff_minor_force.dds",
+            ["data"] = 172,
+        },
+        --- RINGS
         {
             ["uniqueid"] = 12,
+            ["type"] = ESOPie.EntryType.Ring,
+            ["name"] = "Root",
+            ["slots"] = { 1, 2, 3 },
+        },
+        {
+            ["uniqueid"] = 13,
+            ["type"] = ESOPie.EntryType.Ring,
+            ["name"] = "Music",
+            ["slots"] = { 4, 5, 6},
+        },
+        {
+            ["uniqueid"] = 14,
+            ["type"] = ESOPie.EntryType.Ring,
+            ["name"] = "Show Off",
+            ["slots"] = { 7, 8 },
+        },
+        {
+            ["uniqueid"] = 15,
+            ["type"] = ESOPie.EntryType.Ring,
             ["name"] = "Social",
-            ["slots"] =
-            {
-                [1] =
-                {
-                    ["name"] = "Greet",
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/ability_companion_nightblade_013.dds",
-                    ["data"] = 162,
-                    ["uniqueid"] = 13,
-                },
-                [2] =
-                {
-                    ["name"] = "Clap",
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/ability_companion_restorationstaff_002.dds",
-                    ["data"] = 185,
-                    ["uniqueid"] = 14,
-                },
-                [3] =
-                {
-                    ["uniqueid"] = 15,
-                    ["action"] = 6,
-                    ["icon"] = "/esoui/art/icons/ability_buff_minor_force.dds",
-                    ["data"] = 172,
-                    ["name"] = "Congratulate",
-                },
-            },
+            ["slots"] = { 9, 10, 11 },
         },
     },
-    ["rootRing"] = 1,
+    ["rootRings"] = { 12, 13, 0, 0, 0, 0 },
+    ["savedVersion"] = ESOPie.savedVarsVersion,
 }
 
 local ui = {
     initialized = false,
     nextUniqueID = 0,
-    collectionCache = {
-        emoteCategoryNames = {},
-        emoteCategoryValues = {},
-        allyCategoryNames = {},
-        allyCategoryValues = {},
+    collectionCategoryCache = {
+        [ESOPie.CollectionType.Allies] = { names = {}, values = {} },
+        [ESOPie.CollectionType.Momento] = { names = {}, values = {} },
+        [ESOPie.CollectionType.VanityPet] = { names = {}, values = {} },
+        [ESOPie.CollectionType.Emote] = { names = {}, values = {} },
     },
     actionChoices = {},
     actionChoicesValues = {},
-    ringChoices = {},
-    ringChoicesValues = {},
-    slotChoices = {},
-    slotChoicesValues = {},
+    bindingRingChoices = {},
+    bindingRingValues = {},
+    configurationChoices = {},
+    configurationValues = {},
     selectedCollectionCategory = 0,
-    currentEditingRing = {},
-    currentEditingSlot = {}
+    currentEditing = nil
 }
 
+local function EntryIsRing(entry)
+    if not entry then return false end
+    return entry.type == ESOPie.EntryType.Ring
+end
+
+local function EntryIsSlot(entry)
+    if not entry then return false end
+    return entry.type == ESOPie.EntryType.Slot
+end
+
 local function GetCategoryFromData(actionType, data)
-    if actionType == ESOPie.actions.ACTION_PLAYEMOTE then
+    if actionType == ESOPie.Action.PlayEmote then
         if data and type(data) == "number" then
             local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(data)
             if emoteInfo then
@@ -182,33 +188,37 @@ local function GetCategoryFromData(actionType, data)
     return 0
 end
 
-local function IsSubringAction(slot)
-    return slot and slot.action == ESOPie.actions.ACTION_SUBMENU
+local function IsSubringAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.Submenu
 end
 
-local function IsCommandAction(slot)
-    return slot and (slot.action == ESOPie.actions.ACTION_CHATEXEC or slot.action == ESOPie.actions.ACTION_CODEEXEC)
+local function IsCommandAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.ChatExec or entry.action == ESOPie.Action.CodeExec
 end
 
-local function IsEmoteAction(slot)
-    return slot and slot.action == ESOPie.actions.ACTION_PLAYEMOTE
+local function IsEmoteAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.PlayEmote
 end
 
-local function IsAllyAction(slot)
-    return slot and slot.action == ESOPie.actions.ACTION_SUMMONALLY
+local function IsAllyAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.SummonAlly
 end
 
-local function IsCollectableAction(slot)
-    return slot and (IsEmoteAction(slot) or IsAllyAction(slot))
+local function IsCollectableAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return IsEmoteAction(entry) or IsAllyAction(entry)
 end
 
-local function CollectionHasCategory(slot)
-    if slot then
-        if      slot.action == ESOPie.actions.ACTION_PLAYEMOTE  then return true
-        elseif  slot.action == ESOPie.actions.ACTION_SUMMONALLY then return true
-        elseif  slot.action == ESOPie.actions.ACTION_SETMOUNT   then return true
-        elseif  slot.action == ESOPie.actions.ACTION_SETNCPET   then return true
-        end
+local function CollectionHasCategory(entry)
+    if not EntryIsSlot(entry) then return false end
+    if      entry.action == ESOPie.Action.PlayEmote     then return true
+    elseif  entry.action == ESOPie.Action.SummonAlly    then return true
+    elseif  entry.action == ESOPie.Action.SetMount      then return true
+    elseif  entry.action == ESOPie.Action.SetVanityPet  then return true
     end
     return false
 end
@@ -236,46 +246,38 @@ local function UpdateInternalCache()
 end
 
 local function UpdateCollectionsCache()
-    local cache = ui.collectionCache
-    ZO_ClearTable(cache.emoteCategoryNames)
-    ZO_ClearTable(cache.emoteCategoryValues)
+    local emoteCache = ui.collectionCategoryCache[ESOPie.CollectionType.Emote]
+    ZO_ClearTable(emoteCache.names)
+    ZO_ClearTable(emoteCache.values)
     local emoteCategories = PLAYER_EMOTE_MANAGER:GetEmoteCategories()
     for _, category in pairs(emoteCategories) do
         local categoryName = L("SI_EMOTECATEGORY", category)
-        table.insert(cache.emoteCategoryNames, categoryName)
-        table.insert(cache.emoteCategoryValues, category)
+        table.insert(emoteCache.names, categoryName)
+        table.insert(emoteCache.values, category)
     end
 end
 
 local function SelectInitialCollectionCategory()
-    if IsCollectableAction(ui.currentEditingSlot) and CollectionHasCategory(ui.currentEditingSlot) then
-        ui.selectedCollectionCategory = GetCategoryFromData(ui.currentEditingSlot.action, ui.currentEditingSlot.data)
+    if IsCollectableAction(ui.currentEditing) and CollectionHasCategory(ui.currentEditing) then
+        ui.selectedCollectionCategory = GetCategoryFromData(ui.currentEditing.action, ui.currentEditing.data)
     else
         ui.selectedCollectionCategory = 0
-    end
-end
-
-local function SelectInitialSlotForEdit()
-    if ui.currentEditingRing then
-        ui.currentEditingSlot = FindEntryByIndex(1, ui.currentEditingRing.slots)
-        SelectInitialCollectionCategory()
-    else
-        ui.currentEditingSlot = nil
     end
 end
 
 local function RebuildCollectionCategoryDropdown()
     local names = {}
     local values = {}
-    if ui.currentEditingSlot then
-        local actionType = ui.currentEditingSlot.action
-        if actionType == ESOPie.actions.ACTION_PLAYEMOTE then
-            names = ui.collectionCache.emoteCategoryNames
-            values = ui.collectionCache.emoteCategoryValues
-        elseif actionType == ESOPie.actions.ACTION_PLAYMOMENTO then
-        elseif actionType == ESOPie.actions.ACTION_SUMMONALLY then
-        elseif actionType == ESOPie.actions.ACTION_SETMOUNT then
-        elseif actionType == ESOPie.actions.ACTION_SETNCPET then
+    if EntryIsSlot(ui.currentEditing) then
+        local actionType = ui.currentEditing.action
+        if actionType == ESOPie.Action.PlayEmote then
+            local cache = ui.collectionCategoryCache[ESOPie.CollectionType.Emote]
+            names = cache.names
+            values = cache.values
+        elseif actionType == ESOPie.Action.PlayMomento then
+        elseif actionType == ESOPie.Action.SummonAlly then
+        elseif actionType == ESOPie.Action.SetMount then
+        elseif actionType == ESOPie.Action.SetVanityPet then
         end
     end
     UpdateDropdown("ESOPIE_SlotEdit_CollectionCategory", names, values)
@@ -284,9 +286,9 @@ end
 local function RebuildCollectionItemDropdown()
     local names = {}
     local values = {}
-    if ui.currentEditingSlot then
-        local actionType = ui.currentEditingSlot.action
-        if actionType == ESOPie.actions.ACTION_PLAYEMOTE then
+    if EntryIsSlot(ui.currentEditing) then
+        local actionType = ui.currentEditing.action
+        if actionType == ESOPie.Action.PlayEmote then
             local categoryId = ui.selectedCollectionCategory
             local emotesList = PLAYER_EMOTE_MANAGER:GetEmoteListForType(categoryId)
             if emotesList then
@@ -305,32 +307,42 @@ end
 
 local function RebuildRingDropdowns()
     if not ESOPie.db then LogError("SavedVars DB not initialized.") return end
-    ZO_ClearTable(ui.ringChoices)
-    ZO_ClearTable(ui.ringChoicesValues)
-    for _, ring in pairs(ESOPie.db.rings) do
-        table.insert(ui.ringChoices, string.format("%s (%d)", ring.name, #ring.slots))
-        table.insert(ui.ringChoicesValues, ring.uniqueid)
-    end
-    UpdateDropdown("ESOPIE_General_RootRing", ui.ringChoices, ui.ringChoicesValues)
-    UpdateDropdown("ESOPIE_RingEdit_Selection", ui.ringChoices, ui.ringChoicesValues)
-    UpdateDropdown("ESOPIE_SlotEdit_Subring", ui.ringChoices, ui.ringChoicesValues)
-end
-
-local function RebuildSlotDropdowns()
-    ZO_ClearTable(ui.slotChoices)
-    ZO_ClearTable(ui.slotChoicesValues)
-    if ui.currentEditingRing and ui.currentEditingRing.slots then
-        for _, slot in pairs(ui.currentEditingRing.slots) do
-            table.insert(ui.slotChoices, slot.name)
-            table.insert(ui.slotChoicesValues, slot.uniqueid)
+    ZO_ClearTable(ui.bindingRingChoices)
+    ZO_ClearTable(ui.bindingRingValues)
+    table.insert(ui.bindingRingChoices, "Disabled")
+    table.insert(ui.bindingRingValues, 0)
+    for _, entry in pairs(ESOPie.db.entries) do
+        if EntryIsRing(entry) then
+            table.insert(ui.bindingRingChoices, ZO_CachedStrFormat("<<1>>", entry.name))
+            table.insert(ui.bindingRingValues, entry.uniqueid)
         end
     end
-    UpdateDropdown("ESOPIE_RingEdit_SlotSelection", ui.slotChoices, ui.slotChoicesValues)
+    for i=1,ESOPie.maxRingBindings do
+        UpdateDropdown("ESOPIE_General_RingBinding" .. tostring(i), ui.bindingRingChoices, ui.bindingRingValues)
+    end
+    UpdateDropdown("ESOPIE_SlotEdit_Subring", ui.bindingRingChoices, ui.bindingRingValues)
+
+    ZO_ClearTable(ui.configurationChoices)
+    ZO_ClearTable(ui.configurationValues)
+    for _, ringId in pairs(ui.bindingRingValues) do
+        local ring = FindEntryByID(ringId, ESOPie.db.entries, ESOPie.EntryType.Ring)
+        if ring then
+            table.insert(ui.configurationChoices, ZO_CachedStrFormat("|cffffff<<1>>|r (Ring)", ring.name))
+            table.insert(ui.configurationValues, ring.uniqueid)
+            for _, slotId in pairs(ring.slots) do
+                local slot = FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
+                if slot then
+                    table.insert(ui.configurationChoices, ZO_CachedStrFormat("-> |c777777<<1>>|r", slot.name))
+                    table.insert(ui.configurationValues, slot.uniqueid)
+                end
+            end
+        end
+    end
+    UpdateDropdown("ESOPIE_Configure_Selection", ui.configurationChoices, ui.configurationValues)
 end
 
 local function RebuildAll()
     RebuildRingDropdowns()
-    RebuildSlotDropdowns()
     RebuildCollectionCategoryDropdown()
     RebuildCollectionItemDropdown()
 end
@@ -339,27 +351,26 @@ end
 -- Global Helpers
 
 function ESOPie:ResetToDefault()
-    ZO_DeepTableCopy(ESOPIE_DB_DEFAULT, ESOPie.db)
+    ZO_ClearTable(self.db)
+    ZO_DeepTableCopy(ESOPIE_DB_DEFAULT, self.db)
+    LogDebug("Settings reset to default.")
 end
 
 -------------------------------------------------------------------------------
 -- Initialize Addon Menu and Settings DB
 
 function ESOPie:InitializeSettings()
-    ESOPie.db = ZO_SavedVars:NewAccountWide(ESOPie.savedVars, ESOPie.savedVarsVersion, nil, ESOPIE_DB_DEFAULT)
-    local saveData = ESOPie.db
+    LogVerbose("Loading save data %s v%d.", self.savedVars, self.savedVarsVersion)
+    self.db = ZO_SavedVars:NewAccountWide(self.savedVars, self.savedVarsVersion, nil, ESOPIE_DB_DEFAULT)
+
+    local saveData = ESOPie.db or {}
 
     local function InitNextID()
         ui.nextUniqueID = 1
         local largestID = 1
-        for _, ring in pairs(ESOPie.db.rings) do
-            if ring.uniqueid and ring.uniqueid > largestID then
-                largestID = ring.uniqueid
-            end
-            for _, slot in pairs(ring.slots) do
-                if slot.uniqueid and slot.uniqueid > largestID then
-                    largestID = slot.uniqueid
-                end
+        for _, entry in pairs(ESOPie.db.entries) do
+            if entry.uniqueid and entry.uniqueid > largestID then
+                largestID = entry.uniqueid
             end
         end
         if largestID > 1 then
@@ -382,13 +393,40 @@ function ESOPie:InitializeSettings()
         ui.initialized = true
     end
 
+    local function RemoveEntry(uniqueid, ensureType)
+        local entryIndex = FindEntryIndexByID(uniqueid, saveData.entries, ensureType)
+        if entryIndex then table.remove(saveData.entries, entryIndex) end
+    end
+
+    local function RemoveRing(uniqueid)
+        RemoveEntry(uniqueid, ESOPie.EntryType.Ring)
+    end
+
+    local function RemoveSlot(uniqueid)
+        RemoveEntry(uniqueid, ESOPie.EntryType.Slot)
+        for _, entry in pairs(saveData.entries) do
+            if EntryIsRing(entry) then
+                local removeIndex = nil
+                for index, id in pairs(entry.slots) do
+                    if id == uniqueid then
+                        removeIndex = index
+                    end
+                end
+                if removeIndex then
+                    table.remove(entry.slots, removeIndex)
+                end
+            end
+        end
+    end
+
     local function CreateNewSlot()
-        if ui.currentEditingRing then
+        if EntryIsRing(ui.currentEditing) then
             local newSlotInfo = {}
             ZO_DeepTableCopy(ESOPIE_DEFAULT_SLOTINFO, newSlotInfo)
             newSlotInfo.uniqueid = GetNextID()
-            table.insert(ui.currentEditingRing.slots, newSlotInfo)
-            ui.currentEditingSlot = newSlotInfo
+            table.insert(saveData.entries, newSlotInfo)
+            table.insert(ui.currentEditing.slots, newSlotInfo.uniqueid)
+            ui.currentEditing = newSlotInfo
         end
     end
 
@@ -396,222 +434,222 @@ function ESOPie:InitializeSettings()
         local newRing = {}
         ZO_DeepTableCopy(ESOPIE_DEFAULT_RING, newRing)
         newRing.uniqueid = GetNextID()
-        table.insert(saveData.rings, newRing)
-        ui.currentEditingRing = newRing
-        CreateNewSlot()
+        table.insert(saveData.entries, newRing)
+        ui.currentEditing = newRing
     end
 
     UpdateInternalCache()
     UpdateCollectionsCache()
 
-    ui.currentEditingRing = FindEntryByID(saveData.rootRing, saveData.rings)
-    SelectInitialSlotForEdit()
+    ui.currentEditing = FindEntryByID(saveData.rootRings[1], saveData.entries)
 
     local optionsTable = {
         -- TODO: Localize
         {
-            type = "header",
+            type = "submenu",
             name = "General Options",
+            controls = {
+                {
+                    type = "dropdown",
+                    reference = "ESOPIE_General_RingBinding1",
+                    name = "Ring Binding 1",
+                    scrollable = true,
+                    choices = ui.bindingRingChoices,
+                    choicesValues = ui.ringValues,
+                    getFunc = function()
+                        return saveData.rootRings[1]
+                    end,
+                    setFunc = function(value)
+                        saveData.rootRings[1] = value
+                    end,
+                },
+                {
+                    type = "dropdown",
+                    reference = "ESOPIE_General_RingBinding2",
+                    name = "Ring Binding 2",
+                    scrollable = true,
+                    choices = ui.bindingRingChoices,
+                    choicesValues = ui.ringValues,
+                    getFunc = function()
+                        return saveData.rootRings[2]
+                    end,
+                    setFunc = function(value)
+                        saveData.rootRings[2] = value
+                    end,
+                },
+                {
+                    type = "dropdown",
+                    reference = "ESOPIE_General_RingBinding3",
+                    name = "Ring Binding 3",
+                    scrollable = true,
+                    choices = ui.bindingRingChoices,
+                    choicesValues = ui.ringValues,
+                    getFunc = function()
+                        return saveData.rootRings[3]
+                    end,
+                    setFunc = function(value)
+                        saveData.rootRings[3] = value
+                    end,
+                },
+                {
+                    type = "dropdown",
+                    reference = "ESOPIE_General_RingBinding4",
+                    name = "Ring Binding 4",
+                    scrollable = true,
+                    choices = ui.bindingRingChoices,
+                    choicesValues = ui.ringValues,
+                    getFunc = function()
+                        return saveData.rootRings[4]
+                    end,
+                    setFunc = function(value)
+                        saveData.rootRings[4] = value
+                    end,
+                },
+                {
+                    type = "dropdown",
+                    reference = "ESOPIE_General_RingBinding5",
+                    name = "Ring Binding 5",
+                    scrollable = true,
+                    choices = ui.bindingRingChoices,
+                    choicesValues = ui.ringValues,
+                    getFunc = function()
+                        return saveData.rootRings[5]
+                    end,
+                    setFunc = function(value)
+                        saveData.rootRings[5] = value
+                    end,
+                },
+                {
+                    type = "dropdown",
+                    reference = "ESOPIE_General_RingBinding6",
+                    name = "Ring Binding 6",
+                    scrollable = true,
+                    choices = ui.bindingRingChoices,
+                    choicesValues = ui.ringValues,
+                    getFunc = function()
+                        return saveData.rootRings[6]
+                    end,
+                    setFunc = function(value)
+                        saveData.rootRings[6] = value
+                    end,
+                },
+            },
         },
-        {
-            type = "dropdown",
-            name = "Root Ring",
-            tooltip = "Select the ring to show when first opening ESOPie",
-            reference = "ESOPIE_General_RootRing",
-            choices = ui.ringChoices,
-            choicesValues = ui.ringChoicesValues,
-            getFunc = function()
-                return saveData.rootRing
-            end,
-            setFunc = function(value)
-                saveData.rootRing = value
-            end,
-            default = function()
-                local ring = FindEntryByID(saveData.rootRing, saveData.rings)
-                if not ring and saveData.rings then
-                    ring = saveData.rings[1]
-                end
-                if ring then
-                    return ring.uniqueid
-                end
-                return 0
-            end,
-        },
+        -----------------------------------------------------------------------
         {
             type = "header",
-            name = "Configure Ring",
+            name = "Configure Rings and Slots",
         },
         {
-            type = "dropdown",
-            name = "Edit Ring",
-            tooltip = "Select the ring to configure.",
-            choices = ui.ringChoices,
-            choicesValues = ui.ringChoicesValues,
-            scrollable = true,
-            sort = "value-up",
-            reference = "ESOPIE_RingEdit_Selection",
-            getFunc = function()
-                if ui.currentEditingRing then
-                    return ui.currentEditingRing.uniqueid
-                end
-                return 0
-            end,
-            setFunc = function(value)
-                ui.currentEditingRing = FindEntryByID(value, saveData.rings)
-                SelectInitialSlotForEdit()
+            type = "button",
+            name = "New Ring",
+            tooltip = "Add a new ring.\nNote: You will need to either set a binding or create a sub-ring slot to access the new ring.",
+            width = "half",
+            func = function()
+                CreateNewRing()
                 RebuildAll()
             end,
-            default = function()
-                local rootRing = FindEntryByID(saveData.rootRing, saveData.rings)
-                if rootRing then
-                    return rootRing.uniqueid
-                else
-                    return 0
+        },
+        {
+            type = "dropdown",
+            reference = "ESOPIE_Configure_Selection",
+            name = "Entry to Configure",
+            tooltip = "Select the ring or slot to configure.",
+            scrollable = 20,
+            choices = ui.configurationChoices,
+            choicesValues = ui.configurationValues,
+            getFunc = function()
+                if ui.currentEditing then
+                    return ui.currentEditing.uniqueid
                 end
+                return 0
+            end,
+            setFunc = function(value)
+                ui.currentEditing = FindEntryByID(value, saveData.entries)
+                SelectInitialCollectionCategory()
+                RebuildAll()
             end,
         },
         {
             type = "editbox",
-            name = "Ring Name",
-            tooltip = "Ring name.",
+            name = "Name",
+            tooltip = "Enter the display name of the selected entry.",
             isMultiline = false,
-            reference = "ESOPIE_RingEdit_Name",
-            disabled = function() return ui.currentEditingRing == nil end,
+            reference = "ESOPIE_Configure_Name",
+            disabled = function() return ui.currentEditing == nil end,
             getFunc = function()
-                if ui.currentEditingRing then
-                    return ui.currentEditingRing.name
+                if ui.currentEditing then
+                    return ui.currentEditing.name
                 end
                 return ""
             end,
             setFunc = function(value)
-                if ui.currentEditingRing then
-                    ui.currentEditingRing.name = value
+                if ui.currentEditing then
+                    ui.currentEditing.name = value
                     RebuildRingDropdowns()
                 end
             end,
         },
         {
             type = "button",
-            name = "New Ring",
-            tooltip = "Add a new ring. Note: Unless the new ring is set as Root Ring you will need to reference the ring with a Open Subring slot action to access it.",
-            width = "half",
+            name = "Remove",
+            tooltip = "Remove the selected entry",
+            width = "full",
+            disabled = function() return ui.currentEditing == nil end,
             func = function()
-                CreateNewRing()
-                SelectInitialSlotForEdit()
-                RebuildAll()
-            end,
-        },
-        {
-            type = "button",
-            name = "Remove Ring",
-            width = "half",
-            disabled = function() return ui.currentEditingRing == nil end,
-            func = function()
-                if ui.currentEditingRing then
-                    local ringIndex = FindEntryIndexByID(ui.currentEditingRing.uniqueid, saveData.rings)
-                    if ringIndex then
-                        table.remove(saveData.rings, ringIndex)
-                    end
-                    ui.currentEditingRing = FindEntryByIndex(1, saveData.rings)
-                    SelectInitialSlotForEdit()
-                    RebuildAll()
+                if EntryIsRing(ui.currentEditing) then
+                    RemoveRing(ui.currentEditing.uniqueid)
+                elseif EntryIsSlot(ui.currentEditing) then
+                    RemoveSlot(ui.currentEditing.uniqueid)
                 end
+                ui.currentEditing = nil
+                RebuildRingDropdowns()
             end,
         },
          -----------------------------------------------------------------------
-         {
-            type = "divider"
-         },
-         {
-            type = "dropdown",
-            name = "Edit Slot",
-            tooltip = "Select the slot to edit.",
-            scrollable = true,
-            sort = "value-up",
-            reference = "ESOPIE_RingEdit_SlotSelection",
-            choices = ui.slotChoices,
-            choicesValues = ui.slotChoicesValues,
-            disabled = function() return ui.currentEditingRing == nil end,
-            getFunc = function()
-                if ui.currentEditingSlot then
-                    return ui.currentEditingSlot.uniqueid
-                else
-                    return 0
-                end
-            end,
-            setFunc = function(value)
-                if ui.currentEditingRing then
-                    ui.currentEditingSlot = FindEntryByID(value, ui.currentEditingRing.slots)
-                end
-                SelectInitialCollectionCategory()
-                if IsCollectableAction(ui.currentEditingSlot) then
-                    RebuildCollectionCategoryDropdown()
-                    RebuildCollectionItemDropdown()
-                end
-            end,
-        },
         {
-            type = "button",
-            name = "New Slot",
-            tooltip = "Add a new slot to this ring.",
-            width = "half",
-            disabled = function() return ui.currentEditingRing == nil end,
-            func = function()
-                CreateNewSlot()
-                SelectInitialCollectionCategory()
-                RebuildSlotDropdowns()
-                if IsCollectableAction(ui.currentEditingSlot) then
-                    RebuildCollectionCategoryDropdown()
-                    RebuildCollectionItemDropdown()
-                end
-            end,
+            type = "submenu",
+            name = "Configure Selected Ring",
+            reference = "ESOPie_RingEdit_Submenu",
+            disabled = function() return not EntryIsRing(ui.currentEditing) end,
+            controls = {
+                {
+                    type = "editbox",
+                    name = "Slot Count",
+                    disabled = true,
+                    getFunc = function()
+                        if EntryIsRing(ui.currentEditing) then
+                            return #ui.currentEditing.slots
+                        end
+                        return 0
+                    end,
+                    setFunc = function(value) end,
+                },
+                {
+                    type = "button",
+                    name = "New Slot",
+                    tooltip = "Add a new slot to this ring. (Maximum of 8 per ring)",
+                    width = "full",
+                    disabled = function() return not EntryIsRing(ui.currentEditing) or table.getn(ui.currentEditing.slots) >= ESOPie.maxVisibleSlots end,
+                    func = function()
+                        CreateNewSlot()
+                        SelectInitialCollectionCategory()
+                        RebuildRingDropdowns()
+                        if IsCollectableAction(ui.currentEditing) then
+                            RebuildCollectionCategoryDropdown()
+                            RebuildCollectionItemDropdown()
+                        end
+                    end,
+                },
+            },
         },
-        {
-            type = "button",
-            name = "Remove Slot",
-            tooltip = "Remove the selected slot from this ring.",
-            width = "half",
-            disabled = function() return ui.currentEditingRing == nil end,
-            func = function()
-                if ui.currentEditingSlot and ui.currentEditingRing then
-                    local slotIndex = FindEntryIndexByID(ui.currentEditingSlot.uniqueid, ui.currentEditingRing.slots)
-                    if slotIndex then
-                        table.remove(ui.currentEditingRing.slots, slotIndex)
-                    end
-                    SelectInitialSlotForEdit()
-                    RebuildSlotDropdowns()
-                    if IsCollectableAction(ui.currentEditingSlot) then
-                        RebuildCollectionCategoryDropdown()
-                        RebuildCollectionItemDropdown()
-                    end
-                end
-            end,
-        },
+         -----------------------------------------------------------------------
         {
             type = "submenu",
             name = "Configure Selected Slot",
             reference = "ESOPie_SlotEdit_Submenu",
-            disabled = function() return ui.currentEditingSlot == nil end,
+            disabled = function() return not EntryIsSlot(ui.currentEditing) end,
             controls = {
-                {
-                    type = "editbox",
-                    name = "Slot Name",
-                    tooltip = "",
-                    isMultiline = false,
-                    getFunc = function()
-                        if ui.currentEditingSlot then
-                            return ui.currentEditingSlot.name
-                        else
-                            return ""
-                        end
-                    end,
-                    setFunc = function(value)
-                        if ui.currentEditingSlot then
-                            ui.currentEditingSlot.name = value
-                            RebuildSlotDropdowns()
-                        end
-                    end,
-                },
                 {
                     type = "iconpicker",
                     name = "Browse for Icon",
@@ -622,35 +660,16 @@ function ESOPie:InitializeSettings()
                     iconSize = 64,
                     width = "full",
                     choices = ESOPIE_ICON_LIBRARY,
-                    getFunc = function()
-                        if ui.currentEditingSlot then
-                            return ui.currentEditingSlot.icon
-                        end
-                        return ""
-                    end,
-                    setFunc = function(value)
-                        if ui.currentEditingSlot then
-                            ui.currentEditingSlot.icon = value
-                        end
-                    end,
+                    getFunc = function() return ui.currentEditing.icon end,
+                    setFunc = function(value) ui.currentEditing.icon = value end,
                 },
                 {
                     type = "editbox",
                     name = "Icon Path",
                     tooltip = "Any icon can be used if you know the path.",
                     isMultiline = false,
-                    getFunc = function()
-                        if ui.currentEditingSlot then
-                            return ui.currentEditingSlot.icon
-                        else
-                            return ""
-                        end
-                    end,
-                    setFunc = function(value)
-                        if ui.currentEditingSlot then
-                            ui.currentEditingSlot.icon = value
-                        end
-                    end,
+                    getFunc = function() return ui.currentEditing.icon end,
+                    setFunc = function(value) ui.currentEditing.icon = value end,
                 },
                 -- TODO: visibility condition
                 {
@@ -663,20 +682,13 @@ function ESOPie:InitializeSettings()
                     --sort = "value-up",
                     choices = ui.actionChoices,
                     choicesValues = ui.actionChoicesValues,
-                    getFunc = function()
-                        if ui.currentEditingSlot then
-                            return ui.currentEditingSlot.action
-                        else
-                            return 0
-                        end
-                    end,
+                    getFunc = function() return ui.currentEditing.action end,
                     setFunc = function(value)
-                        if ui.currentEditingSlot then
-                            ui.currentEditingSlot.action = value
-                            ui.currentEditingSlot.data = nil
-                        end
+                        ui.currentEditing.action = value
+                        ui.currentEditing.data = nil
+
                         SelectInitialCollectionCategory()
-                        if IsCollectableAction(ui.currentEditingSlot) then
+                        if IsCollectableAction(ui.currentEditing) then
                             RebuildCollectionCategoryDropdown()
                             RebuildCollectionItemDropdown()
                         end
@@ -685,26 +697,27 @@ function ESOPie:InitializeSettings()
                 {
                     type = "submenu",
                     name = "Subring",
-                    disabled = function() return not IsSubringAction(ui.currentEditingSlot) end,
+                    disabled = function() return not IsSubringAction(ui.currentEditing) end,
                     controls = {
                         {
                             type = "dropdown",
+                            reference = "ESOPIE_SlotEdit_Subring",
                             name = "Subring",
                             tooltip = "Subring to open",
-                            reference = "ESOPIE_SlotEdit_Subring",
                             sort = "value-up",
-                            choices = ui.ringChoices,
-                            choicesValues = ui.ringChoicesValues,
+                            scrollable = true,
+                            choices = ui.bindingRingChoices,
+                            choicesValues = ui.bindingRingChoices,
                             getFunc = function()
-                                if IsSubringAction(ui.currentEditingSlot) then
-                                    return ui.currentEditingSlot.data
+                                if IsSubringAction(ui.currentEditing) then
+                                    return ui.currentEditing.data
                                 else
                                     return 0
                                 end
                             end,
                             setFunc = function(value)
-                                if IsSubringAction(ui.currentEditingSlot) then
-                                    ui.currentEditingSlot.data = value
+                                if IsSubringAction(ui.currentEditing) then
+                                    ui.currentEditing.data = value
                                 end
                             end,
                         },
@@ -713,7 +726,7 @@ function ESOPie:InitializeSettings()
                 {
                     type = "submenu",
                     name = "Command",
-                    disabled = function() return not IsCommandAction(ui.currentEditingSlot) end,
+                    disabled = function() return not IsCommandAction(ui.currentEditing) end,
                     controls = {
                         {
                             type = "editbox",
@@ -721,15 +734,15 @@ function ESOPie:InitializeSettings()
                             tooltip = "Chat command or Lua code to execute when activated.",
                             isMultiline = true,
                             getFunc = function()
-                                if IsCommandAction(ui.currentEditingSlot) and type(ui.currentEditingSlot.data) == "string" then
-                                    return ui.currentEditingSlot.data
+                                if IsCommandAction(ui.currentEditing) and type(ui.currentEditing.data) == "string" then
+                                    return ui.currentEditing.data
                                 else
                                     return ""
                                 end
                             end,
                             setFunc = function(value)
-                                if IsCommandAction(ui.currentEditingSlot) then
-                                    ui.currentEditingSlot.data = value
+                                if IsCommandAction(ui.currentEditing) then
+                                    ui.currentEditing.data = value
                                 end
                             end,
                         },
@@ -738,49 +751,52 @@ function ESOPie:InitializeSettings()
                 {
                     type = "submenu",
                     name = "Collection",
-                    disabled = function() return not IsCollectableAction(ui.currentEditingSlot) end,
+                    disabled = function() return not IsCollectableAction(ui.currentEditing) end,
                     controls = {
                         {
                             type = "dropdown",
+                            reference = "ESOPIE_SlotEdit_CollectionCategory",
                             name = "Category",
                             tooltip = "Collectable category to select from.",
-                            reference = "ESOPIE_SlotEdit_CollectionCategory",
                             sort = "name-up",
+                            scrollable = true,
                             choices = {},
                             choicesValues = {},
-                            disabled = function() return not (IsCollectableAction(ui.currentEditingSlot) and CollectionHasCategory(ui.currentEditingSlot)) end,
+                            disabled = function() return not (IsCollectableAction(ui.currentEditing) and CollectionHasCategory(ui.currentEditing)) end,
                             getFunc = function()
-                                if IsCollectableAction(ui.currentEditingSlot) then
-                                    local categoryId = GetCategoryFromData(ui.currentEditingSlot.action, ui.currentEditingSlot.data)
+                                if IsCollectableAction(ui.currentEditing) then
+                                    local categoryId = GetCategoryFromData(ui.currentEditing.action, ui.currentEditing.data)
                                     return categoryId
                                 end
                                 return 0
                             end,
                             setFunc = function(value)
-                                if IsCollectableAction(ui.currentEditingSlot) then
+                                if IsCollectableAction(ui.currentEditing) then
                                     ui.selectedCollectionCategory = value
+                                    RebuildCollectionItemDropdown()
                                 end
                             end,
                         },
                         {
                             type = "dropdown",
+                            reference = "ESOPIE_SlotEdit_CollectionItem",
                             name = "Collectable",
                             tooltip = "Collectable to use when activated.",
-                            reference = "ESOPIE_SlotEdit_CollectionItem",
                             sort = "name-up",
+                            scrollable = true,
                             choices = {},
                             choicesValues = {},
                             getFunc = function()
-                                if IsCollectableAction(ui.currentEditingSlot) and type(ui.currentEditingSlot.data) == "number" then
-                                    return ui.currentEditingSlot.data
+                                if IsCollectableAction(ui.currentEditing) and type(ui.currentEditing.data) == "number" then
+                                    return ui.currentEditing.data
                                 else
                                     return 0
                                 end
                             end,
                             setFunc = function(value)
-                                if IsCollectableAction(ui.currentEditingSlot) then
-                                    ui.currentEditingSlot.data = value
-                                    --ui.currentEditingSlot.icon = GetCollectibleIcon(value)
+                                if IsCollectableAction(ui.currentEditing) then
+                                    ui.currentEditing.data = value
+                                    --ui.currentEditing.icon = GetCollectibleIcon(value)
                                 end
                             end,
                         },

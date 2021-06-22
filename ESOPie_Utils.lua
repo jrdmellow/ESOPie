@@ -10,10 +10,10 @@ function GetActionTypeString(action)
     return nil
 end
 
-function FindEntryByID(id, haystack)
+function FindEntryByID(id, haystack, ensureType)
     if id and haystack then
         for _, entry in pairs(haystack) do
-            if entry.uniqueid == id then
+            if entry.uniqueid == id and (ensureType == nil or entry.type == ensureType) then
                 return entry
             end
         end
@@ -21,10 +21,10 @@ function FindEntryByID(id, haystack)
     return nil
 end
 
-function FindEntryByName(name, haystack)
+function FindEntryByName(name, haystack, ensureType)
     if name and haystack then
         for _, entry in pairs(haystack) do
-            if entry.name == name then
+            if entry.name == name and (ensureType == nil or entry.type == ensureType) then
                 return entry
             end
         end
@@ -33,16 +33,14 @@ function FindEntryByName(name, haystack)
 end
 
 function FindEntryByIndex(index, haystack)
-    if index and haystack then
-        return haystack[index]
-    end
+    if index and haystack then return haystack[index] end
     return nil
 end
 
-function FindEntryIndexByID(id, haystack)
+function FindEntryIndexByID(id, haystack, ensureType)
     if id and haystack then
         for i, entry in pairs(haystack) do
-            if entry.uniqueid == id then
+            if entry.uniqueid == id and (ensureType == nil or entry.type == ensureType) then
                 return i
             end
         end

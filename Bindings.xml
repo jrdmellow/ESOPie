@@ -1,8 +1,28 @@
 <Bindings>
     <Layer name="SI_KEYBINDINGS_LAYER_GENERAL">
         <Category name="SI_ESOPIE_TITLE">
-            <Action name="ESOPIE_HOLD_ITERACTION">
-                <Down>ESOPie:OnHoldMenuOpen()</Down>
+            <Action name="ESOPIE_OPEN_RING_1">
+                <Down>ESOPie:OnHoldMenuOpen(1)</Down>
+                <Up>ESOPie:OnHoldMenuClose()</Up>
+            </Action>
+            <Action name="ESOPIE_OPEN_RING_2">
+                <Down>ESOPie:OnHoldMenuOpen(2)</Down>
+                <Up>ESOPie:OnHoldMenuClose()</Up>
+            </Action>
+            <Action name="ESOPIE_OPEN_RING_3">
+                <Down>ESOPie:OnHoldMenuOpen(3)</Down>
+                <Up>ESOPie:OnHoldMenuClose()</Up>
+            </Action>
+            <Action name="ESOPIE_OPEN_RING_4">
+                <Down>ESOPie:OnHoldMenuOpen(4)</Down>
+                <Up>ESOPie:OnHoldMenuClose()</Up>
+            </Action>
+            <Action name="ESOPIE_OPEN_RING_5">
+                <Down>ESOPie:OnHoldMenuOpen(5)</Down>
+                <Up>ESOPie:OnHoldMenuClose()</Up>
+            </Action>
+            <Action name="ESOPIE_OPEN_RING_6">
+                <Down>ESOPie:OnHoldMenuOpen(6)</Down>
                 <Up>ESOPie:OnHoldMenuClose()</Up>
             </Action>
         </Category>

@@ -8,45 +8,57 @@ ESOPie.slashCommand = "/esopie"
 ESOPie.settingsPanelName = "ESOPieSettingsPanel"
 ESOPie.prefix = string.format("[%s]: ", ESOPie.name)
 ESOPie.savedVars = "ESOPieSavedVars"
-ESOPie.savedVarsVersion = 3
+ESOPie.savedVarsVersion = 4
 ESOPie.logger = nil
 ESOPie.actionLayerName = "RadialMenu"
 ESOPie.radialAnimation = nil --"DefaultRadialMenuAnimation" -- Disabled the animation to keep it snappy.
 ESOPie.entryAnimation = "SelectableItemRadialMenuEntryAnimation"
-ESOPie.actions = {
-    ACTION_NOOP = 1,
-    ACTION_SUBMENU = 2,
-    ACTION_CHATEXEC = 3,
-    ACTION_CODEEXEC = 4,
-    ACTION_GOTOHOME = 5,
-    ACTION_PLAYEMOTE = 6,
-    ACTION_PLAYMOMENTO = 7,
-    ACTION_SUMMONALLY = 8,
-    ACTION_SETMOUNT = 9,
-    ACTION_SETNCPET = 10,
+ESOPie.EntryType = {
+    Ring = 1,
+    Slot = 2,
+}
+ESOPie.CollectionType = {
+    Allies = 1,
+    Momento = 2,
+    VanityPet = 3,
+    Mount = 4,
+    Emote = 5,
+}
+ESOPie.Action = {
+    Noop = 1,
+    Submenu = 2,
+    ChatExec = 3,
+    CodeExec = 4,
+    GoToHome = 5,
+    PlayEmote = 6,
+    PlayMomento = 7,
+    SummonAlly = 8,
+    SetMount = 9,
+    SetVanityPet = 10,
 }
 ESOPie.actionNames = {
-    [ESOPie.actions.ACTION_NOOP]            = L(ESOPIE_ACTION_NOOP),
-    [ESOPie.actions.ACTION_SUBMENU]         = L(ESOPIE_ACTION_SUBRING),
-    [ESOPie.actions.ACTION_CHATEXEC]        = L(ESOPIE_ACTION_CHATEXEC),
-    [ESOPie.actions.ACTION_CODEEXEC]        = L(ESOPIE_ACTION_CODEEXEC),
-    [ESOPie.actions.ACTION_GOTOHOME]        = L(ESOPIE_ACTION_GOTOHOME),
-    [ESOPie.actions.ACTION_PLAYEMOTE]       = L(ESOPIE_ACTION_PLAYEMOTE),
-    [ESOPie.actions.ACTION_PLAYMOMENTO]     = L(ESOPIE_ACTION_PLAYMOMENTO),
-    [ESOPie.actions.ACTION_SUMMONALLY]      = L(ESOPIE_ACTION_SUMMONALLY),
-    [ESOPie.actions.ACTION_SETMOUNT]        = L(ESOPIE_ACTION_SETMOUNT),
-    [ESOPie.actions.ACTION_SETNCPET]        = L(ESOPIE_ACTION_SETNCPET),
+    [ESOPie.Action.Noop]                = L(ESOPIE_ACTION_NOOP),
+    [ESOPie.Action.Submenu]             = L(ESOPIE_ACTION_SUBRING),
+    [ESOPie.Action.ChatExec]            = L(ESOPIE_ACTION_CHATEXEC),
+    [ESOPie.Action.CodeExec]            = L(ESOPIE_ACTION_CODEEXEC),
+    [ESOPie.Action.GoToHome]            = L(ESOPIE_ACTION_GOTOHOME),
+    [ESOPie.Action.PlayEmote]           = L(ESOPIE_ACTION_PLAYEMOTE),
+    [ESOPie.Action.PlayMomento]         = L(ESOPIE_ACTION_PLAYMOMENTO),
+    [ESOPie.Action.SummonAlly]          = L(ESOPIE_ACTION_SUMMONALLY),
+    [ESOPie.Action.SetMount]            = L(ESOPIE_ACTION_SETMOUNT),
+    [ESOPie.Action.SetVanityPet]        = L(ESOPIE_ACTION_SETNCPET),
 }
 -- Temporary: Limit visible actions and sort
 ESOPie.supportedActions = {
-    ESOPie.actions.ACTION_NOOP,
-    ESOPie.actions.ACTION_SUBMENU,
-    ESOPie.actions.ACTION_PLAYEMOTE,
-    ESOPie.actions.ACTION_SUMMONALLY,
-    ESOPie.actions.ACTION_CHATEXEC,
-    --ESOPie.actions.ACTION_CODEEXEC,
+    ESOPie.Action.Noop,
+    ESOPie.Action.Submenu,
+    ESOPie.Action.PlayEmote,
+    ESOPie.Action.SummonAlly,
+    ESOPie.Action.ChatExec,
+    --ESOPie.Action.CodeExec,
 }
 ESOPie.showCancelButton = false
+ESOPie.maxRingBindings = 6
 ESOPie.maxVisibleSlots = 8
 ESOPie.displayedRing = nil
 ESOPie.selectedSlotInfo = nil
@@ -78,9 +90,9 @@ local ESOPIE_INACCESSIBLE_SLASH_COMMANDS = {
     "/dezone", "/frzone", "/enzone", "/jpzone", "/ruzone",
 }
 
-local ESOPIE_ICON_SLOT_DEFUALT = "EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
-local ESOPIE_ICON_SLOT_EMPTY = "EsoUI/Art/Quickslots/quickslot_emptySlot.dds"
-local ESOPIE_ICON_SLOT_CANCEL = "EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds"
+ESOPIE_ICON_SLOT_DEFAULT = "/EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
+ESOPIE_ICON_SLOT_EMPTY = "/EsoUI/Art/Quickslots/quickslot_emptySlot.dds"
+ESOPIE_ICON_SLOT_CANCEL = "/EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds"
 
 local function ESOPie_DevLog(level, fmt, ...)
     if ESOPie.logger and ESOPie.logger.Log then
@@ -165,12 +177,12 @@ function ESOPie:ExecuteSetMount(itemId)
     LogWarning("TODO: ExecuteSetMount<%s>", tostring(itemId))
 end
 
-function ESOPie:ExecuteSetNCPet(itemId)
-    LogWarning("TODO: ExecuteSetNCPet<%s>", tostring(itemId))
+function ESOPie:ExecuteSetVanityPet(itemId)
+    LogWarning("TODO: ExecuteSetVanityPet<%s>", tostring(itemId))
 end
 
 function ESOPie:Initialize()
-    self.InitializeSettings()
+    self:InitializeSettings()
     self.pieRoot = ESOPie_RadialMenuController:New(ESOPie_UI_Root, "ESOPie_EntryTemplate", self.radialAnimation, self.entryAnimation)
     self.pieRoot:SetSlotActivateCallback(function(selectedEntry) self:OnSlotActivate(selectedEntry) end)
     self.pieRoot:SetSlotNavigateCallback(function(selectedEntry) self:OnSlotNavigate(selectedEntry) end)
@@ -188,19 +200,19 @@ function ESOPie:Initialize()
         self.executionCallbacks[action] = handler
     end
 
-    RegisterHandler(self.actions.ACTION_NOOP, function(data) end) -- Do nothing.
-    RegisterHandler(self.actions.ACTION_SUBMENU, function(data) end) -- Do nothing; handled by navigate callback.
-    RegisterHandler(self.actions.ACTION_CHATEXEC, function(data) self:ExecuteChatCommand(data) end)
-    RegisterHandler(self.actions.ACTION_CODEEXEC, function(data) self:ExecuteCustomCommand(data) end)
-    RegisterHandler(self.actions.ACTION_GOTOHOME, function(data) self:ExecuteGoToHome(data) end)
-    RegisterHandler(self.actions.ACTION_PLAYEMOTE, function(data) self:ExecuteEmote(data) end)
-    RegisterHandler(self.actions.ACTION_PLAYMOMENTO, function(data) self:ExecuteMomento(data) end)
-    RegisterHandler(self.actions.ACTION_SUMMONALLY, function(data) self:ExecuteSummonAlly(data) end)
-    RegisterHandler(self.actions.ACTION_SETMOUNT, function(data) self:ExecuteSetMount(data) end)
-    RegisterHandler(self.actions.ACTION_SETNCPET, function(data) self:ExecuteSetNCPet(data) end)
+    RegisterHandler(self.Action.Noop, function(data) end) -- Do nothing.
+    RegisterHandler(self.Action.Submenu, function(data) end) -- Do nothing; handled by navigate callback.
+    RegisterHandler(self.Action.ChatExec, function(data) self:ExecuteChatCommand(data) end)
+    RegisterHandler(self.Action.CodeExec, function(data) self:ExecuteCustomCommand(data) end)
+    RegisterHandler(self.Action.GoToHome, function(data) self:ExecuteGoToHome(data) end)
+    RegisterHandler(self.Action.PlayEmote, function(data) self:ExecuteEmote(data) end)
+    RegisterHandler(self.Action.PlayMomento, function(data) self:ExecuteMomento(data) end)
+    RegisterHandler(self.Action.SummonAlly, function(data) self:ExecuteSummonAlly(data) end)
+    RegisterHandler(self.Action.SetMount, function(data) self:ExecuteSetMount(data) end)
+    RegisterHandler(self.Action.SetVanityPet, function(data) self:ExecuteSetVanityPet(data) end)
 
     local actionsSize = 0
-    for _, action in pairs(self.actions) do
+    for _, action in pairs(self.Action) do
         actionsSize = actionsSize + 1
     end
     local actionNamesSize = table.getn(self.actionNames)
@@ -215,8 +227,8 @@ function ESOPie:Initialize()
 end
 
 function ESOPie:GetRing(id)
-    if self.db and self.db.rings then
-        local ring = FindEntryByID(id, self.db.rings)
+    if self.db and self.db.entries then
+        local ring = FindEntryByID(id, self.db.entries, ESOPie.EntryType.Ring)
         if not ring then
             LogError("Ring <%d> not found.", id)
         end
@@ -227,21 +239,16 @@ function ESOPie:GetRing(id)
     return nil
 end
 
-function ESOPie:GetRootRing()
-    return self:GetRing(self.db.rootRing)
+function ESOPie:GetRootRing(index)
+    if index <= table.getn(self.db.rootRings) then
+        return self:GetRing(self.db.rootRings[index])
+    end
+    return nil
 end
 
 function ESOPie:GetSelectedSlotFromEntry(entry)
-    if not entry then return end
-    if self.displayedRing and self.displayedRing.slots then
-        for _, slot in pairs(self.displayedRing.slots) do
-            if slot.uniqueid == entry.data.uniqueid then
-                return slot
-            end
-        end
-        LogDebug("Entry %s<%d> not found in ring %s", entry.name, entry.uniqueid, self.displayedRing.name)
-    end
-    return nil
+    if not entry or not entry.data then return nil end
+    return FindEntryByID(entry.data.uniqueid, self.db.entries, ESOPie.EntryType.Slot)
 end
 
 function ESOPie:OnSlotActivate(selectedEntry)
@@ -261,7 +268,7 @@ function ESOPie:OnSlotNavigate(selectedEntry)
     local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for navigate") return end
     LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, GetActionTypeString(slotInfo.action), slotInfo.data)
-    if slotInfo.action == ESOPie.actions.ACTION_SUBMENU then
+    if slotInfo.action == ESOPie.Action.Submenu then
         self.pieRoot:StopInteraction()
         self.pieRoot.menuControl.selectedLabel:SetText("")
         self.displayedRing = self:GetRing(slotInfo.data)
@@ -283,22 +290,24 @@ function ESOPie:OnPopulateSlots()
         maxSlots = maxSlots - 1
     end
     for i=1, math.min(maxSlots, #ring.slots) do -- TODO: Handle more than 8 slots somehow. Another binding?
-        local slotInfo = ring.slots[i]
-        local name = slotInfo.name
-        local icon = slotInfo.icon
-        if name == nil or name == '' then name = "Slot " .. i end
-        if icon == nil or icon == '' then icon = ESOPIE_ICON_SLOT_DEFUALT end
-        self.pieRoot:AddSlot(name, icon, icon, slotInfo.uniqueid)
+        local slotInfo = FindEntryByID(ring.slots[i], self.db.entries)
+        if slotInfo then
+            -- TODO: check visibility condition
+            local name = slotInfo.name
+            local icon = slotInfo.icon
+            if name == nil or name == '' then name = "Slot " .. i end
+            if icon == nil or icon == '' then icon = ESOPIE_ICON_SLOT_DEFUALT end
+            self.pieRoot:AddSlot(name, icon, icon, slotInfo.uniqueid)
+        end
     end
     if ESOPie.showCancelButton then
         self.pieRoot:AddSlot(L(SI_RADIAL_MENU_CANCEL_BUTTON), ESOPIE_ICON_SLOT_CANCEL, ESOPIE_ICON_SLOT_CANCEL, 0)
     end
 end
 
-function ESOPie:OnHoldMenuOpen()
-    LogVerbose("Menu Open: Push %s", self.actionLayerName)
+function ESOPie:OnHoldMenuOpen(ringIndex)
     self.currentSlotInfo = nil
-    self.displayedRing = self:GetRootRing()
+    self.displayedRing = self:GetRootRing(ringIndex)
     if self.displayedRing then
         self.pieRoot:StartInteraction()
     end

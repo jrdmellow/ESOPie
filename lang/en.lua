@@ -30,7 +30,12 @@ local strings = {
     -- Bindings
     ESOPIE_BINDING_INTERACTIONLAYER             = "ESOPie",
     ESOPIE_BINDING_CATEGORY_MENU                = "ESOPie (While Showing)",
-    SI_BINDING_NAME_ESOPIE_HOLD_ITERACTION      = "Open ESOPie (Hold)",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_1          = "Open Ring 1 (Hold)",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_2          = "Open Ring 2 (Hold)",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_3          = "Open Ring 3 (Hold)",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_4          = "Open Ring 4 (Hold)",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_5          = "Open Ring 5 (Hold)",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_6          = "Open Ring 6 (Hold)",
     SI_BINDING_NAME_ESOPIE_MENU_ACTIVATE_SLOT   = "Navigate to Slot",
 }
 

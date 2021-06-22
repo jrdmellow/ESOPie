@@ -2,7 +2,7 @@ local L = GetString
 
 ESOPie = ESOPie or {}
 ESOPie.name = "ESOPie"
-ESOPie.version = "0.1.1 Beta"
+ESOPie.version = "0.2 Beta"
 ESOPie.author = "Planetshine Games"
 ESOPie.slashCommand = "/esopie"
 ESOPie.settingsPanelName = "ESOPieSettingsPanel"

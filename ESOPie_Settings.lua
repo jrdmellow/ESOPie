@@ -628,7 +628,7 @@ function ESOPie:InitializeSettings()
                 {
                     type = "button",
                     name = "New Slot",
-                    tooltip = "Add a new slot to this ring. (Maximum of 8 per ring)",
+                    tooltip = ZO_CachedStrFormat("Add a new slot to this ring. (Maximum of <<1>> per ring)", ESOPie.maxVisibleSlots),
                     width = "full",
                     disabled = function() return not EntryIsRing(ui.currentEditing) or table.getn(ui.currentEditing.slots) >= ESOPie.maxVisibleSlots end,
                     func = function()

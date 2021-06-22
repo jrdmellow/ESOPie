@@ -59,7 +59,7 @@ ESOPie.supportedActions = {
 }
 ESOPie.showCancelButton = false
 ESOPie.maxRingBindings = 6
-ESOPie.maxVisibleSlots = 8
+ESOPie.maxVisibleSlots = 12
 ESOPie.displayedRing = nil
 ESOPie.selectedSlotInfo = nil
 ESOPie.executionCallbacks = {}

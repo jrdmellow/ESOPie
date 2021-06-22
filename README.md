@@ -66,7 +66,7 @@ Select an action for the slot to perform when activated. One of the submenus bel
 #### 🎬 Slot Actions
 Several slot actions are supported. Most actions should be self-explanatory, however there is one special action that may be confusing at first; `Open Subring` actions will do nothing when activated, instead they must be clicked with Left Mouse while the bound key or button remains held. The displayed ring will close and the subring will take its place. Releasing the binding will activate a selected action within the subring as normal.
 
-##  Contributors
+## ❤ Contributors
 Special thanks to some people that have provided feedback during the development of this addon.
 
 * PenguinAirborne

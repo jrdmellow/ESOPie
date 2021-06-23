@@ -603,7 +603,7 @@ function ESOPie:InitializeSettings()
                 elseif EntryIsSlot(ui.currentEditing) then
                     RemoveSlot(ui.currentEditing.uniqueid)
                 end
-                ui.currentEditing = nil
+                ui.currentEditing = FindEntryByID(saveData.rootRings[1], saveData.entries)
                 RebuildRingDropdowns()
             end,
         },
@@ -661,16 +661,34 @@ function ESOPie:InitializeSettings()
                     iconSize = 64,
                     width = "full",
                     choices = ESOPIE_ICON_LIBRARY,
-                    getFunc = function() return ui.currentEditing.icon end,
-                    setFunc = function(value) ui.currentEditing.icon = value end,
+                    getFunc = function()
+                        if ui.currentEditing then
+                            return ui.currentEditing.icon
+                        end
+                        return ESOPIE_ICON_SLOT_DEFAULT
+                    end,
+                    setFunc = function(value)
+                        if ui.currentEditing then
+                            ui.currentEditing.icon = value
+                        end
+                    end,
                 },
                 {
                     type = "editbox",
                     name = "Icon Path",
                     tooltip = "Any icon can be used if you know the path.",
                     isMultiline = false,
-                    getFunc = function() return ui.currentEditing.icon end,
-                    setFunc = function(value) ui.currentEditing.icon = value end,
+                    getFunc = function()
+                        if ui.currentEditing then
+                            return ui.currentEditing.icon
+                        end
+                        return ESOPIE_ICON_SLOT_DEFAULT
+                    end,
+                    setFunc = function(value)
+                        if ui.currentEditing then
+                            ui.currentEditing.icon = value
+                        end
+                    end,
                 },
                 -- TODO: visibility condition
                 {
@@ -683,15 +701,22 @@ function ESOPie:InitializeSettings()
                     --sort = "value-up",
                     choices = ui.actionChoices,
                     choicesValues = ui.actionChoicesValues,
-                    getFunc = function() return ui.currentEditing.action end,
+                    getFunc = function()
+                        if ui.currentEditing then
+                            return ui.currentEditing.action
+                        end
+                        return ESOPie.Action.Noop
+                    end,
                     setFunc = function(value)
-                        ui.currentEditing.action = value
-                        ui.currentEditing.data = nil
+                        if ui.currentEditing then
+                            ui.currentEditing.action = value
+                            ui.currentEditing.data = nil
 
-                        SelectInitialCollectionCategory()
-                        if IsCollectableAction(ui.currentEditing) then
-                            RebuildCollectionCategoryDropdown()
-                            RebuildCollectionItemDropdown()
+                            SelectInitialCollectionCategory()
+                            if IsCollectableAction(ui.currentEditing) then
+                                RebuildCollectionCategoryDropdown()
+                                RebuildCollectionItemDropdown()
+                            end
                         end
                     end,
                 },

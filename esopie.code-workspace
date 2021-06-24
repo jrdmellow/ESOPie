@@ -4,5 +4,22 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"Lua.diagnostics.globals": [
+			"CALLBACK_MANAGER",
+			"ZO_CachedStrFormat",
+			"d",
+			"df",
+			"GetString",
+			"ZO_DeepTableCopy",
+			"PLAYER_EMOTE_MANAGER",
+			"ZO_ClearTable",
+			"WINDOW_MANAGER",
+			"GetActionBindingInfo",
+			"GetActionIndicesFromName",
+			"ZO_SavedVars",
+			"LibAddonMenu2",
+			"LibDialog"
+		]
+	}
 }

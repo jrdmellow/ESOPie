@@ -2,7 +2,6 @@ if not ESOPie then d("[ESOPIE] ERROR: ESOPie not initialized.") return end
 
 local L = GetString
 local LAM = LibAddonMenu2
-local Dialog = LibDialog
 
 local LogVerbose = ESOPie.LogVerbose
 local LogDebug = ESOPie.LogDebug
@@ -166,6 +165,31 @@ local ui = {
     currentEditing = nil
 }
 
+-------------------------------------------------------------------------------
+-- Unique IDs
+
+local function InitNextID()
+    ui.nextUniqueID = 1
+    local largestID = 1
+    for _, entry in pairs(ESOPie.db.entries) do
+        if entry.uniqueid and entry.uniqueid > largestID then
+            largestID = entry.uniqueid
+        end
+    end
+    if largestID > 1 then
+        ui.nextUniqueID = largestID + 1
+    end
+end
+
+local function GetNextID()
+    local id = ui.nextUniqueID
+    ui.nextUniqueID = ui.nextUniqueID + 1
+    return id
+end
+
+-------------------------------------------------------------------------------
+-- Entry Utilities
+
 local function EntryIsRing(entry)
     if not entry then return false end
     return entry.type == ESOPie.EntryType.Ring
@@ -175,6 +199,55 @@ local function EntryIsSlot(entry)
     if not entry then return false end
     return entry.type == ESOPie.EntryType.Slot
 end
+
+local function RemoveEntry(uniqueid, ensureType)
+    local entryIndex = FindEntryIndexByID(uniqueid, ESOPie.db.entries, ensureType)
+    if entryIndex then table.remove(ESOPie.db.entries, entryIndex) end
+end
+
+local function RemoveRing(uniqueid)
+    RemoveEntry(uniqueid, ESOPie.EntryType.Ring)
+end
+
+local function RemoveSlot(uniqueid)
+    RemoveEntry(uniqueid, ESOPie.EntryType.Slot)
+    for _, entry in pairs(ESOPie.db.entries) do
+        if EntryIsRing(entry) then
+            local removeIndex = nil
+            for index, id in pairs(entry.slots) do
+                if id == uniqueid then
+                    removeIndex = index
+                end
+            end
+            if removeIndex then
+                table.remove(entry.slots, removeIndex)
+            end
+        end
+    end
+end
+
+local function CreateNewSlot()
+    if EntryIsRing(ui.currentEditing) then
+        local newSlotInfo = {}
+        ZO_DeepTableCopy(ESOPIE_DEFAULT_SLOTINFO, newSlotInfo)
+        newSlotInfo.uniqueid = GetNextID()
+        table.insert(ESOPie.db.entries, newSlotInfo)
+        table.insert(ui.currentEditing.slots, newSlotInfo.uniqueid)
+        return newSlotInfo
+    end
+    return nil
+end
+
+local function CreateNewRing()
+    local newRing = {}
+    ZO_DeepTableCopy(ESOPIE_DEFAULT_RING, newRing)
+    newRing.uniqueid = GetNextID()
+    table.insert(ESOPie.db.entries, newRing)
+    return newRing
+end
+
+-------------------------------------------------------------------------------
+-- Action Utilities
 
 local function GetCategoryFromData(actionType, data)
     if actionType == ESOPie.Action.PlayEmote then
@@ -224,15 +297,8 @@ local function CollectionHasCategory(entry)
     return false
 end
 
-local function UpdateDropdown(controlName, choices, values, tooltips)
-    local control = WINDOW_MANAGER:GetControlByName(controlName)
-    if not control then
-        LogVerbose("[Update] Unable to find control (%s)", controlName)
-        return
-    end
-    control:UpdateChoices(choices, values, tooltips)
-    control:UpdateValue()
-end
+-------------------------------------------------------------------------------
+-- Cached Data
 
 local function UpdateInternalCache()
     ZO_ClearTable(ui.actionChoices)
@@ -256,6 +322,19 @@ local function UpdateCollectionsCache()
         table.insert(emoteCache.names, categoryName)
         table.insert(emoteCache.values, category)
     end
+end
+
+-------------------------------------------------------------------------------
+-- UI Updates
+
+local function UpdateDropdown(controlName, choices, values, tooltips)
+    local control = WINDOW_MANAGER:GetControlByName(controlName)
+    if not control then
+        LogVerbose("[Update] Unable to find control (%s)", controlName)
+        return
+    end
+    control:UpdateChoices(choices, values, tooltips)
+    control:UpdateValue()
 end
 
 local function SelectInitialCollectionCategory()
@@ -384,27 +463,6 @@ function ESOPie:InitializeSettings()
     LogVerbose("Loading save data %s v%d.", self.savedVars, self.savedVarsVersion)
     self.db = ZO_SavedVars:NewAccountWide(self.savedVars, self.savedVarsVersion, nil, ESOPIE_DB_DEFAULT)
 
-    local saveData = ESOPie.db or {}
-
-    local function InitNextID()
-        ui.nextUniqueID = 1
-        local largestID = 1
-        for _, entry in pairs(ESOPie.db.entries) do
-            if entry.uniqueid and entry.uniqueid > largestID then
-                largestID = entry.uniqueid
-            end
-        end
-        if largestID > 1 then
-            ui.nextUniqueID = largestID + 1
-        end
-    end
-
-    local function GetNextID()
-        local id = ui.nextUniqueID
-        ui.nextUniqueID = ui.nextUniqueID + 1
-        return id
-    end
-
     local function OnPanelCreated(panel)
         if panel ~= ESOPie.LAMPanel then return end
         LogVerbose("OnPanelCreated")
@@ -420,59 +478,13 @@ function ESOPie:InitializeSettings()
         RefreshBindingWarning()
     end
 
-    local function RemoveEntry(uniqueid, ensureType)
-        local entryIndex = FindEntryIndexByID(uniqueid, saveData.entries, ensureType)
-        if entryIndex then table.remove(saveData.entries, entryIndex) end
-    end
-
-    local function RemoveRing(uniqueid)
-        RemoveEntry(uniqueid, ESOPie.EntryType.Ring)
-    end
-
-    local function RemoveSlot(uniqueid)
-        RemoveEntry(uniqueid, ESOPie.EntryType.Slot)
-        for _, entry in pairs(saveData.entries) do
-            if EntryIsRing(entry) then
-                local removeIndex = nil
-                for index, id in pairs(entry.slots) do
-                    if id == uniqueid then
-                        removeIndex = index
-                    end
-                end
-                if removeIndex then
-                    table.remove(entry.slots, removeIndex)
-                end
-            end
-        end
-    end
-
-    local function CreateNewSlot()
-        if EntryIsRing(ui.currentEditing) then
-            local newSlotInfo = {}
-            ZO_DeepTableCopy(ESOPIE_DEFAULT_SLOTINFO, newSlotInfo)
-            newSlotInfo.uniqueid = GetNextID()
-            table.insert(saveData.entries, newSlotInfo)
-            table.insert(ui.currentEditing.slots, newSlotInfo.uniqueid)
-            return newRing
-        end
-        return nil
-    end
-
-    local function CreateNewRing()
-        local newRing = {}
-        ZO_DeepTableCopy(ESOPIE_DEFAULT_RING, newRing)
-        newRing.uniqueid = GetNextID()
-        table.insert(saveData.entries, newRing)
-        return newRing
-    end
-
     local function OnConfirmRemoveEntry()
         if EntryIsRing(ui.currentEditing) then
             RemoveRing(ui.currentEditing.uniqueid)
         elseif EntryIsSlot(ui.currentEditing) then
             RemoveSlot(ui.currentEditing.uniqueid)
         end
-        ui.currentEditing = FindEntryByID(saveData.rootRings[1], saveData.entries)
+        ui.currentEditing = FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
         RebuildRingDropdowns()
         LAM.util.RequestRefreshIfNeeded(ESOPie.LAMPanel)
     end
@@ -491,7 +503,7 @@ function ESOPie:InitializeSettings()
     UpdateInternalCache()
     UpdateCollectionsCache()
 
-    ui.currentEditing = FindEntryByID(saveData.rootRings[1], saveData.entries)
+    ui.currentEditing = FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
 
     local optionsTable = {
         -- TODO: Localize
@@ -512,10 +524,10 @@ function ESOPie:InitializeSettings()
                     choices = ui.bindingRingChoices,
                     choicesValues = ui.ringValues,
                     getFunc = function()
-                        return saveData.rootRings[1]
+                        return ESOPie.db.rootRings[1]
                     end,
                     setFunc = function(value)
-                        saveData.rootRings[1] = value
+                        ESOPie.db.rootRings[1] = value
                     end,
                 },
                 {
@@ -526,10 +538,10 @@ function ESOPie:InitializeSettings()
                     choices = ui.bindingRingChoices,
                     choicesValues = ui.ringValues,
                     getFunc = function()
-                        return saveData.rootRings[2]
+                        return ESOPie.db.rootRings[2]
                     end,
                     setFunc = function(value)
-                        saveData.rootRings[2] = value
+                        ESOPie.db.rootRings[2] = value
                     end,
                 },
                 {
@@ -540,10 +552,10 @@ function ESOPie:InitializeSettings()
                     choices = ui.bindingRingChoices,
                     choicesValues = ui.ringValues,
                     getFunc = function()
-                        return saveData.rootRings[3]
+                        return ESOPie.db.rootRings[3]
                     end,
                     setFunc = function(value)
-                        saveData.rootRings[3] = value
+                        ESOPie.db.rootRings[3] = value
                     end,
                 },
                 {
@@ -554,10 +566,10 @@ function ESOPie:InitializeSettings()
                     choices = ui.bindingRingChoices,
                     choicesValues = ui.ringValues,
                     getFunc = function()
-                        return saveData.rootRings[4]
+                        return ESOPie.db.rootRings[4]
                     end,
                     setFunc = function(value)
-                        saveData.rootRings[4] = value
+                        ESOPie.db.rootRings[4] = value
                     end,
                 },
                 {
@@ -568,10 +580,10 @@ function ESOPie:InitializeSettings()
                     choices = ui.bindingRingChoices,
                     choicesValues = ui.ringValues,
                     getFunc = function()
-                        return saveData.rootRings[5]
+                        return ESOPie.db.rootRings[5]
                     end,
                     setFunc = function(value)
-                        saveData.rootRings[5] = value
+                        ESOPie.db.rootRings[5] = value
                     end,
                 },
                 {
@@ -582,10 +594,10 @@ function ESOPie:InitializeSettings()
                     choices = ui.bindingRingChoices,
                     choicesValues = ui.ringValues,
                     getFunc = function()
-                        return saveData.rootRings[6]
+                        return ESOPie.db.rootRings[6]
                     end,
                     setFunc = function(value)
-                        saveData.rootRings[6] = value
+                        ESOPie.db.rootRings[6] = value
                     end,
                 },
             },
@@ -620,7 +632,7 @@ function ESOPie:InitializeSettings()
                 return 0
             end,
             setFunc = function(value)
-                ui.currentEditing = FindEntryByID(value, saveData.entries)
+                ui.currentEditing = FindEntryByID(value, ESOPie.db.entries)
                 SelectInitialCollectionCategory()
                 RebuildAll()
             end,
@@ -640,7 +652,7 @@ function ESOPie:InitializeSettings()
             end,
             setFunc = function(value)
                 if ui.currentEditing then
-                    ui.currentEditing.name = valuewwwwww
+                    ui.currentEditing.name = value
                     RebuildRingDropdowns()
                 end
             end,
@@ -682,7 +694,7 @@ function ESOPie:InitializeSettings()
                     name = "New Slot",
                     tooltip = ZO_CachedStrFormat("Add a new slot to this ring. (Maximum of <<1>> per ring)", ESOPie.maxVisibleSlots),
                     width = "full",
-                    disabled = function() return not EntryIsRing(ui.currentEditing) or table.getn(ui.currentEditing.slots) >= ESOPie.maxVisibleSlots end,
+                    disabled = function() return not EntryIsRing(ui.currentEditing) or #ui.currentEditing.slots >= ESOPie.maxVisibleSlots end,
                     func = function()
                         CreateNewSlot()
                         SelectInitialCollectionCategory()

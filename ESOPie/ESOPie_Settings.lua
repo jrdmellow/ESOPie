@@ -206,7 +206,13 @@ local function RemoveEntry(uniqueid, ensureType)
 end
 
 local function RemoveRing(uniqueid)
-    RemoveEntry(uniqueid, ESOPie.EntryType.Ring)
+    local ring = FindEntryByID(uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+    if ring then
+        for _, slotId in pairs(ring.slots) do
+            RemoveEntry(slotId, ESOPie.EntryType.Slot)
+        end
+        RemoveEntry(uniqueid, ESOPie.EntryType.Ring)
+    end
 end
 
 local function RemoveSlot(uniqueid)
@@ -456,12 +462,49 @@ function ESOPie:ResetToDefault()
     LogDebug("Settings reset to default.")
 end
 
+function ESOPie:CleanOrphanedSlots()
+    LogVerbose("Cleaning up orphaned slots")
+    local rings = {}
+    local slots = {}
+    for index, entry in pairs(ESOPie.db.entries) do
+        if EntryIsRing(entry) then
+            table.insert(rings, entry)
+        elseif EntryIsSlot(entry) then
+            table.insert(slots, entry)
+        else
+            LogVerbose("Invalid slot type in entries at index %d", index)
+        end
+    end
+
+    local orphans = {}
+    for _, slot in pairs(slots) do
+        local foundOwner = false
+        for _, ring in pairs(rings) do
+            for _, slotId in pairs(ring.slots) do
+                if slotId == slot.uniqueid then foundOwner = true break end
+            end
+            if foundOwner then break end
+        end
+        if not foundOwner then
+            table.insert(orphans, slot)
+        end
+    end
+
+    if not ZO_IsTableEmpty(orphans) then
+        for _, entry in pairs(orphans) do
+            LogVerbose("> %s", entry.name)
+            RemoveEntry(entry.uniqueid)
+        end
+        LogWarning("Cleaning up %d orphaned slots", #orphans)
+    end
+end
 -------------------------------------------------------------------------------
 -- Initialize Addon Menu and Settings DB
 
 function ESOPie:InitializeSettings()
     LogVerbose("Loading save data %s v%d.", self.savedVars, self.savedVarsVersion)
     self.db = ZO_SavedVars:NewAccountWide(self.savedVars, self.savedVarsVersion, nil, ESOPIE_DB_DEFAULT)
+    self:CleanOrphanedSlots()
 
     local function OnPanelCreated(panel)
         if panel ~= ESOPie.LAMPanel then return end
@@ -664,8 +707,22 @@ function ESOPie:InitializeSettings()
             width = "full",
             disabled = function() return ui.currentEditing == nil end,
             func = function()
-                local entryName = ui.currentEditing.name or ("Slot" .. tostring(ui.currentEditing.uniqueid))
-                local confirmStr = ZO_CachedStrFormat("Are you sure you want to |cff0000permanently remove|r <<1>>?\nYou will not be able to undo this.", entryName)
+                local entryName = ui.currentEditing.name or ("Entry" .. tostring(ui.currentEditing.uniqueid))
+                local confirmStr = ZO_CachedStrFormat("Are you sure you want to |cff0000permanently remove|r |c55eeff<<1>>|r?", entryName)
+                if EntryIsRing(ui.currentEditing) then
+                    local slotNames = {}
+                    for _, slotId in pairs(ui.currentEditing.slots) do
+                        local slot = FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
+                        if slot then
+                            table.insert(slotNames, ZO_CachedStrFormat(" - |c55eeff<<1>>|r", slot.name or ("Slot" .. slotId)))
+                        end
+                    end
+
+                    if not ZO_IsTableEmpty(slotNames) then
+                        confirmStr = table.concat({ confirmStr, ZO_CachedStrFormat("\n\nRemoving this ring will also remove the following slots;\n"), table.concat(slotNames, "\n") }, "")
+                    end
+                end
+                confirmStr = table.concat({ confirmStr, ZO_CachedStrFormat("\n\nThis cannot be undone.", entryName) }, "")
                 LibDialog:RegisterDialog(ESOPie.name, "RemoveEntryDialog", "Remove Entry", confirmStr, function() OnConfirmRemoveEntry() end, nil, nil, true)
                 LibDialog:ShowDialog(ESOPie.name, "RemoveEntryDialog")
             end,
@@ -776,7 +833,7 @@ function ESOPie:InitializeSettings()
                                 local entryName = ui.currentEditing.name or ("Slot" .. tostring(ui.currentEditing.uniqueid))
                                 local currentActionName = GetActionTypeString(ui.currentEditing.action)
                                 local newActionName = GetActionTypeString(value)
-                                local confirmStr = ZO_CachedStrFormat("Are you sure you want to change the action of <<1>> from \"<<2>>\" to \"<<3>>\"?\nYou will lose any data associated with the existing action.", entryName, currentActionName, newActionName)
+                                local confirmStr = ZO_CachedStrFormat("Are you sure you want to change the action of |c55eeff<<1>>|r to |cffee55<<2>>|r?\n\nYou will lose any settings associated with the current |cffee55<<3>>|r action.", entryName, newActionName, currentActionName)
                                 LibDialog:RegisterDialog(ESOPie.name, "ChangeActionTypeDialog", "Change Slot Action", confirmStr, function() OnConfirmChangeSlotAction(value) end, nil, nil, true)
                                 LibDialog:ShowDialog(ESOPie.name, "ChangeActionTypeDialog")
                             else
@@ -906,7 +963,7 @@ function ESOPie:InitializeSettings()
         registerForRefresh = true,
         registerForDefaults = false,
         slashCommand = ESOPie.slashCommand,
-        -- website = "",
+        website = ESOPie.url,
         -- feedback = "",
         -- donation = "",
     }

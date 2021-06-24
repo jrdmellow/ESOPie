@@ -19,7 +19,8 @@
 			"GetActionIndicesFromName",
 			"ZO_SavedVars",
 			"LibAddonMenu2",
-			"LibDialog"
+			"LibDialog",
+			"ZO_IsTableEmpty"
 		]
 	}
 }

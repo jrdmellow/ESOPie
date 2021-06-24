@@ -4,6 +4,7 @@ ESOPie = ESOPie or {}
 ESOPie.name = "ESOPie"
 ESOPie.version = "0.2.1 BETA"
 ESOPie.author = "Planetshine Games"
+ESOPie.url = "https://github.com/jrdmellow/ESOPie"
 ESOPie.slashCommand = "/esopie"
 ESOPie.settingsPanelName = "ESOPieSettingsPanel"
 ESOPie.prefix = string.format("[%s]: ", ESOPie.name)

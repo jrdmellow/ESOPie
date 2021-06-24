@@ -3,7 +3,7 @@
 ## Version 0.1
 ## AddOnVersion: 01
 ## IsLibrary: false
-## Dependson LibAddonMenu-2.0>=32
+## Dependson LibAddonMenu-2.0>=32 LibDialog
 ## OptionalDependsOn: LibDebugLogger
 ## SavedVariables: ESOPieSavedVars
 ## Author: Planetshine

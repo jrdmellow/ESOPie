@@ -2,6 +2,7 @@ if not ESOPie then d("[ESOPIE] ERROR: ESOPie not initialized.") return end
 
 local L = GetString
 local LAM = LibAddonMenu2
+local Dialog = LibDialog
 
 local LogVerbose = ESOPie.LogVerbose
 local LogDebug = ESOPie.LogDebug
@@ -439,6 +440,28 @@ function ESOPie:InitializeSettings()
         return newRing
     end
 
+    local function OnConfirmRemoveEntry()
+        if EntryIsRing(ui.currentEditing) then
+            RemoveRing(ui.currentEditing.uniqueid)
+        elseif EntryIsSlot(ui.currentEditing) then
+            RemoveSlot(ui.currentEditing.uniqueid)
+        end
+        ui.currentEditing = FindEntryByID(saveData.rootRings[1], saveData.entries)
+        RebuildRingDropdowns()
+        LAM.util.RequestRefreshIfNeeded(ESOPie.LAMPanel)
+    end
+
+    local function OnConfirmChangeSlotAction(value)
+        ui.currentEditing.action = value
+        ui.currentEditing.data = nil
+        SelectInitialCollectionCategory()
+        if IsCollectableAction(ui.currentEditing) then
+            RebuildCollectionCategoryDropdown()
+            RebuildCollectionItemDropdown()
+        end
+        LAM.util.RequestRefreshIfNeeded(ESOPie_SlotEdit_Submenu)
+    end
+
     UpdateInternalCache()
     UpdateCollectionsCache()
 
@@ -586,7 +609,7 @@ function ESOPie:InitializeSettings()
             end,
             setFunc = function(value)
                 if ui.currentEditing then
-                    ui.currentEditing.name = value
+                    ui.currentEditing.name = valuewwwwww
                     RebuildRingDropdowns()
                 end
             end,
@@ -598,13 +621,10 @@ function ESOPie:InitializeSettings()
             width = "full",
             disabled = function() return ui.currentEditing == nil end,
             func = function()
-                if EntryIsRing(ui.currentEditing) then
-                    RemoveRing(ui.currentEditing.uniqueid)
-                elseif EntryIsSlot(ui.currentEditing) then
-                    RemoveSlot(ui.currentEditing.uniqueid)
-                end
-                ui.currentEditing = FindEntryByID(saveData.rootRings[1], saveData.entries)
-                RebuildRingDropdowns()
+                local entryName = ui.currentEditing.name or ("Slot" .. tostring(ui.currentEditing.uniqueid))
+                local confirmStr = ZO_CachedStrFormat("Are you sure you want to |cff0000permanently remove|r <<1>>?\nYou will not be able to undo this.", entryName)
+                LibDialog:RegisterDialog(ESOPie.name, "RemoveEntryDialog", "Remove Entry", confirmStr, function() OnConfirmRemoveEntry() end, nil, nil, true)
+                LibDialog:ShowDialog(ESOPie.name, "RemoveEntryDialog")
             end,
         },
          -----------------------------------------------------------------------
@@ -709,13 +729,15 @@ function ESOPie:InitializeSettings()
                     end,
                     setFunc = function(value)
                         if ui.currentEditing then
-                            ui.currentEditing.action = value
-                            ui.currentEditing.data = nil
-
-                            SelectInitialCollectionCategory()
-                            if IsCollectableAction(ui.currentEditing) then
-                                RebuildCollectionCategoryDropdown()
-                                RebuildCollectionItemDropdown()
+                            if ui.currentEditing.action ~= ESOPie.Action.Noop and ui.currentEditing.data ~= nil then
+                                local entryName = ui.currentEditing.name or ("Slot" .. tostring(ui.currentEditing.uniqueid))
+                                local currentActionName = GetActionTypeString(ui.currentEditing.action)
+                                local newActionName = GetActionTypeString(value)
+                                local confirmStr = ZO_CachedStrFormat("Are you sure you want to change the action of <<1>> from \"<<2>>\" to \"<<3>>\"?\nYou will lose any data associated with the existing action.", entryName, currentActionName, newActionName)
+                                LibDialog:RegisterDialog(ESOPie.name, "ChangeActionTypeDialog", "Change Slot Action", confirmStr, function() OnConfirmChangeSlotAction(value) end, nil, nil, true)
+                                LibDialog:ShowDialog(ESOPie.name, "ChangeActionTypeDialog")
+                            else
+                                OnConfirmChangeSlotAction(value)
                             end
                         end
                     end,

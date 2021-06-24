@@ -35,6 +35,8 @@ Boot the game or reload the UI if already logged in. ESOPie should appear in the
 #### 🚨 Do this first!
 Before doing anything else you must bind a key or button to trigger ESOPie. Go to your control settings and bind at least one of the 6 available slots.
 
+![ESOPie ring bindings in the Controls menu](img/settings_ringbindings.png)
+
 #### ℹ Using ESOPie
 ESOPie comes with some preset rings and slots. Try them out to get a feel for the controls.
 
@@ -50,8 +52,12 @@ Open up the ESOPie settings in the Add-Ons submenu.
 
 Under the general settings you will see a secion to Configure Rings and Slots. Here you can click `New Ring` to add an empty ring. The new ring will be selected automatically and from here you can add some slots.
 
+![General settings](img/settings_ringbindings2.png)
+
 #### 🎰 Slots slots slots
 Slots are the core of ESOPie. All actions are bound to a slot. To create a new slot, select a ring from the `Entry to Configure` dropdown and open the `Configure Selected Ring` submenu.
+
+![Entry to Configure dropdown](img/settings_configure_entrydropdown.png)
 
 Click `New Slot`.
 
@@ -62,6 +68,8 @@ Set a name for the new slot.
 The `Configure Selected Slot` submenu should now be lit up. Open it up and change the icon if desired.
 
 Select an action for the slot to perform when activated. One of the submenus below should be lit up. Open it and configure to your liking.
+
+![Slot configuration](img/settings_configure_selectedslot.png)
 
 #### 🎬 Slot Actions
 Several slot actions are supported. Most actions should be self-explanatory, however there is one special action that may be confusing at first; `Open Subring` actions will do nothing when activated, instead they must be clicked with Left Mouse while the bound key or button remains held. The displayed ring will close and the subring will take its place. Releasing the binding will activate a selected action within the subring as normal.

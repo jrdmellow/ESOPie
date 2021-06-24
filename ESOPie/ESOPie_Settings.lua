@@ -348,6 +348,26 @@ local function RebuildAll()
     RebuildCollectionItemDropdown()
 end
 
+local function RefreshBindingWarning()
+    local validBindingCount = 0
+    for i=1,ESOPie.maxRingBindings do
+        local layerIndex, categoryIndex, actionIndex = GetActionIndicesFromName("ESOPIE_OPEN_RING_" .. tostring(i))
+        for j=1,4 do
+            local keyCode, _, _, _, _ = GetActionBindingInfo(layerIndex, categoryIndex, actionIndex, j)
+            if layerIndex and keyCode > 0 then
+                validBindingCount = validBindingCount + 1
+            end
+        end
+    end
+
+    if validBindingCount == 0 then
+        ESOPie_BindingWarning.data.text = "|cffff00Warning:|r No ring bindings have been detected. In order to use ESOPie at least one ring binding must be assigned.\nGo to the Controls settings and assign a key or button to at least one ESOPie ring."
+    else
+        ESOPie_BindingWarning.data.text = ""
+    end
+    ESOPie_BindingWarning:UpdateValue()
+end
+
 -------------------------------------------------------------------------------
 -- Global Helpers
 
@@ -392,6 +412,12 @@ function ESOPie:InitializeSettings()
         UpdateCollectionsCache()
         RebuildAll()
         ui.initialized = true
+    end
+
+    local function OnPanelOpened(panel)
+        if panel ~= ESOPie.LAMPanel then return end
+        LogVerbose("OnPanelOpened")
+        RefreshBindingWarning()
     end
 
     local function RemoveEntry(uniqueid, ensureType)
@@ -469,6 +495,11 @@ function ESOPie:InitializeSettings()
 
     local optionsTable = {
         -- TODO: Localize
+        {
+            type = "description",
+            text = "",
+            reference = "ESOPie_BindingWarning"
+        },
         {
             type = "submenu",
             name = "General Options",
@@ -873,6 +904,6 @@ function ESOPie:InitializeSettings()
 
     CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnPanelCreated)
     --CALLBACK_MANAGER:RegisterCallback("LAM-RefreshPanel", OnPanelRefreshed)
-    --CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", MyLAMPanelOpened)
+    CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", OnPanelOpened)
     --CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", MyLAMPanelClosed)
 end

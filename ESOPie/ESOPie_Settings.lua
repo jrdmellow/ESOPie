@@ -149,12 +149,8 @@ local ESOPIE_DB_DEFAULT = {
 local ui = {
     initialized = false,
     nextUniqueID = 0,
-    collectionCategoryCache = {
-        [ESOPie.CollectionType.Allies] = { names = {}, values = {} },
-        [ESOPie.CollectionType.Momento] = { names = {}, values = {} },
-        [ESOPie.CollectionType.VanityPet] = { names = {}, values = {} },
-        [ESOPie.CollectionType.Emote] = { names = {}, values = {} },
-    },
+    collectionPopulateCallbacks = {},
+    collectibleCategories = { names = {}, values = {}, collectibles = {} },
     actionChoices = {},
     actionChoicesValues = {},
     bindingRingChoices = {},
@@ -318,15 +314,48 @@ local function UpdateInternalCache()
     end
 end
 
-local function UpdateCollectionsCache()
-    local emoteCache = ui.collectionCategoryCache[ESOPie.CollectionType.Emote]
-    ZO_ClearTable(emoteCache.names)
-    ZO_ClearTable(emoteCache.values)
+local function PopulateCollectablesByCategory(categoryIds, unlockedOnly)
+    LogVerbose("PopulateCollectablesByCategory(%s)", table.concat(categoryIds, ", "))
+    for _, categoryId in pairs(categoryIds) do
+        local categoryName = GetCollectibleCategoryNameByCategoryId(categoryId)
+        table.insert(ui.collectibleCategories.names, categoryName)
+        table.insert(ui.collectibleCategories.values, categoryId)
+        local collectibles = { names = {}, values = {} }
+        for index = 1, GetTotalCollectiblesByCategoryType(categoryId) do
+            local collectibleId = GetCollectibleIdFromType(categoryId, index)
+            if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
+                table.insert(collectibles.names, ZO_CachedStrFormat("<<1>>", GetCollectibleName(collectibleId)))
+                table.insert(collectibles.values, collectibleId)
+            end
+        end
+        ui.collectibleCategories.collectibles[categoryId] = collectibles
+    end
+end
+
+local function PopulateAllies()
+    LogVerbose("PopulateAllies")
+    PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, COLLECTIBLE_CATEGORY_TYPE_COMPANION }, true)
+end
+
+local function PopulateEmotes()
     local emoteCategories = PLAYER_EMOTE_MANAGER:GetEmoteCategories()
-    for _, category in pairs(emoteCategories) do
-        local categoryName = L("SI_EMOTECATEGORY", category)
-        table.insert(emoteCache.names, categoryName)
-        table.insert(emoteCache.values, category)
+    for _, categoryId in pairs(emoteCategories) do
+        local categoryName = L("SI_EMOTECATEGORY", categoryId)
+        table.insert(ui.collectibleCategories.names, categoryName)
+        table.insert(ui.collectibleCategories.values, categoryId)
+
+        local collectibles = { names = {}, values = {} }
+        local emotesList = PLAYER_EMOTE_MANAGER:GetEmoteListForType(categoryId)
+        if emotesList then
+            for _, emote in pairs(emotesList) do
+                local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emote)
+                table.insert(collectibles.names, ZO_CachedStrFormat("<<1>>", emoteInfo.displayName))
+                table.insert(collectibles.values, emoteInfo.emoteId)
+            end
+        else
+            LogDebug("No emote list for category %d", categoryId)
+        end
+        ui.collectibleCategories.collectibles[categoryId] = collectibles
     end
 end
 
@@ -348,47 +377,47 @@ local function SelectInitialCollectionCategory()
         ui.selectedCollectionCategory = GetCategoryFromData(ui.currentEditing.action, ui.currentEditing.data)
     else
         ui.selectedCollectionCategory = 0
+        if #ui.collectibleCategories.values > 0 then
+            ui.selectedCollectionCategory = ui.collectibleCategories.values[1]
+        end
     end
 end
 
-local function RebuildCollectionCategoryDropdown()
-    local names = {}
-    local values = {}
-    if EntryIsSlot(ui.currentEditing) then
+local function UpdateCollectionsCache()
+    LogVerbose("UpdateCollectionsCache")
+    ZO_ClearTable(ui.collectibleCategories.names)
+    ZO_ClearTable(ui.collectibleCategories.values)
+    ZO_ClearTable(ui.collectibleCategories.collectibles)
+    if IsCollectableAction(ui.currentEditing) then
+        LogVerbose("UpdateCollectionsCache-1")
         local actionType = ui.currentEditing.action
-        if actionType == ESOPie.Action.PlayEmote then
-            local cache = ui.collectionCategoryCache[ESOPie.CollectionType.Emote]
-            names = cache.names
-            values = cache.values
-        elseif actionType == ESOPie.Action.PlayMomento then
-        elseif actionType == ESOPie.Action.SummonAlly then
-        elseif actionType == ESOPie.Action.SetMount then
-        elseif actionType == ESOPie.Action.SetVanityPet then
+        local callback = ui.collectionPopulateCallbacks[actionType]
+        if callback and type(callback) == "function" then
+            LogVerbose("UpdateCollectionsCache-2")
+            local names = {}
+            local values = {}
+            callback(names, values)
+        else
+            LogWarning("No populate callback for action <%s>", GetActionTypeString(actionType))
         end
+    else
+        LogVerbose("Not editing a slot")
     end
-    UpdateDropdown("ESOPIE_SlotEdit_CollectionCategory", names, values)
+    SelectInitialCollectionCategory()
 end
 
-local function RebuildCollectionItemDropdown()
-    local names = {}
-    local values = {}
-    if EntryIsSlot(ui.currentEditing) then
-        local actionType = ui.currentEditing.action
-        if actionType == ESOPie.Action.PlayEmote then
-            local categoryId = ui.selectedCollectionCategory
-            local emotesList = PLAYER_EMOTE_MANAGER:GetEmoteListForType(categoryId)
-            if emotesList then
-                for _, emote in pairs(emotesList) do
-                    local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emote)
-                    table.insert(names, ZO_CachedStrFormat("<<1>>", emoteInfo.displayName))
-                    table.insert(values, emoteInfo.emoteId)
-                end
-            else
-                LogDebug("No emote list")
-            end
-        end
+local function RebuildCollectionsDropdowns()
+    local collectibleNames = {}
+    local collectibleValues = {}
+    local currentCategory = ui.collectibleCategories.collectibles[ui.selectedCollectionCategory]
+    if currentCategory then
+        collectibleNames = currentCategory.names
+        collectibleValues = currentCategory.values
     end
-    UpdateDropdown("ESOPIE_SlotEdit_CollectionItem", names, values)
+    LogVerbose("%d Categories", #ui.collectibleCategories.values)
+    LogVerbose("> %d Collectibles", #collectibleValues)
+    UpdateDropdown("ESOPIE_SlotEdit_CollectionItem", collectibleNames, collectibleValues)
+    UpdateDropdown("ESOPIE_SlotEdit_CollectionCategory", ui.collectibleCategories.names, ui.collectibleCategories.values)
 end
 
 local function RebuildRingDropdowns()
@@ -429,8 +458,7 @@ end
 
 local function RebuildAll()
     RebuildRingDropdowns()
-    RebuildCollectionCategoryDropdown()
-    RebuildCollectionItemDropdown()
+    RebuildCollectionsDropdowns()
 end
 
 local function RefreshBindingWarning()
@@ -535,16 +563,15 @@ function ESOPie:InitializeSettings()
     local function OnConfirmChangeSlotAction(value)
         ui.currentEditing.action = value
         ui.currentEditing.data = nil
-        SelectInitialCollectionCategory()
-        if IsCollectableAction(ui.currentEditing) then
-            RebuildCollectionCategoryDropdown()
-            RebuildCollectionItemDropdown()
-        end
+        UpdateCollectionsCache()
+        RebuildCollectionsDropdowns()
         LAM.util.RequestRefreshIfNeeded(ESOPie_SlotEdit_Submenu)
     end
 
+    ui.collectionPopulateCallbacks[ESOPie.Action.PlayEmote] = PopulateEmotes
+    ui.collectionPopulateCallbacks[ESOPie.Action.SummonAlly] = PopulateAllies
+
     UpdateInternalCache()
-    UpdateCollectionsCache()
 
     ui.currentEditing = FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
 
@@ -676,7 +703,7 @@ function ESOPie:InitializeSettings()
             end,
             setFunc = function(value)
                 ui.currentEditing = FindEntryByID(value, ESOPie.db.entries)
-                SelectInitialCollectionCategory()
+                UpdateCollectionsCache()
                 RebuildAll()
             end,
         },
@@ -702,9 +729,22 @@ function ESOPie:InitializeSettings()
         },
         {
             type = "button",
+            name = "New Slot",
+            tooltip = ZO_CachedStrFormat("Add a new slot to this ring. (Maximum of <<1>> per ring)", ESOPie.maxVisibleSlots),
+            width = "half",
+            disabled = function() return not EntryIsRing(ui.currentEditing) or #ui.currentEditing.slots >= ESOPie.maxVisibleSlots end,
+            func = function()
+                CreateNewSlot()
+                RebuildRingDropdowns()
+                UpdateCollectionsCache()
+                RebuildCollectionsDropdowns()
+            end,
+        },
+        {
+            type = "button",
             name = "Remove",
             tooltip = "Remove the selected entry",
-            width = "full",
+            width = "half",
             disabled = function() return ui.currentEditing == nil end,
             func = function()
                 local entryName = ui.currentEditing.name or ("Entry" .. tostring(ui.currentEditing.uniqueid))
@@ -726,43 +766,6 @@ function ESOPie:InitializeSettings()
                 LibDialog:RegisterDialog(ESOPie.name, "RemoveEntryDialog", "Remove Entry", confirmStr, function() OnConfirmRemoveEntry() end, nil, nil, true)
                 LibDialog:ShowDialog(ESOPie.name, "RemoveEntryDialog")
             end,
-        },
-         -----------------------------------------------------------------------
-        {
-            type = "submenu",
-            name = "Configure Selected Ring",
-            reference = "ESOPie_RingEdit_Submenu",
-            disabled = function() return not EntryIsRing(ui.currentEditing) end,
-            controls = {
-                {
-                    type = "editbox",
-                    name = "Slot Count",
-                    disabled = true,
-                    getFunc = function()
-                        if EntryIsRing(ui.currentEditing) then
-                            return #ui.currentEditing.slots
-                        end
-                        return 0
-                    end,
-                    setFunc = function(value) end,
-                },
-                {
-                    type = "button",
-                    name = "New Slot",
-                    tooltip = ZO_CachedStrFormat("Add a new slot to this ring. (Maximum of <<1>> per ring)", ESOPie.maxVisibleSlots),
-                    width = "full",
-                    disabled = function() return not EntryIsRing(ui.currentEditing) or #ui.currentEditing.slots >= ESOPie.maxVisibleSlots end,
-                    func = function()
-                        CreateNewSlot()
-                        SelectInitialCollectionCategory()
-                        RebuildRingDropdowns()
-                        if IsCollectableAction(ui.currentEditing) then
-                            RebuildCollectionCategoryDropdown()
-                            RebuildCollectionItemDropdown()
-                        end
-                    end,
-                },
-            },
         },
          -----------------------------------------------------------------------
         {
@@ -913,15 +916,14 @@ function ESOPie:InitializeSettings()
                             disabled = function() return not (IsCollectableAction(ui.currentEditing) and CollectionHasCategory(ui.currentEditing)) end,
                             getFunc = function()
                                 if IsCollectableAction(ui.currentEditing) then
-                                    local categoryId = GetCategoryFromData(ui.currentEditing.action, ui.currentEditing.data)
-                                    return categoryId
+                                    return ui.selectedCollectionCategory
                                 end
                                 return 0
                             end,
                             setFunc = function(value)
                                 if IsCollectableAction(ui.currentEditing) then
                                     ui.selectedCollectionCategory = value
-                                    RebuildCollectionItemDropdown()
+                                    RebuildCollectionsDropdowns()
                                 end
                             end,
                         },

@@ -171,7 +171,11 @@ function ESOPie:ExecuteMomento(itemId)
 end
 
 function ESOPie:ExecuteSummonAlly(itemId)
-    LogWarning("TODO: ExecuteSummonAlly<%s>", tostring(itemId))
+    if IsCollectibleUnlocked(itemId) then
+        UseCollectible(itemId, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
+    else
+        Notify("Ally %s is not unlocked.", ZO_CachedStrFormat("<<1>>", GetCollectibleName(itemId)))
+    end
 end
 
 function ESOPie:ExecuteSetMount(itemId)

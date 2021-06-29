@@ -319,8 +319,6 @@ function ESOPie:OnHoldMenuOpen(ringIndex)
 end
 
 function ESOPie:OnHoldMenuClose()
-    LogVerbose("Menu Close: Pop %s", self.actionLayerName)
-    --self.currentSlotInfo = nil
     self.pieRoot:StopInteraction()
 end
 

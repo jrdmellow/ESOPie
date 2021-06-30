@@ -10,6 +10,9 @@ local LogWarning = ESOPie.LogWarning
 local LogError = ESOPie.LogError
 local Notify = ESOPie.Notify
 
+local TOOLTIP_DEFAULT_FONT = "ZoFontGame"
+local TOOLTIP_TITLE_FONT = "ZoFontTooltipTitle"
+
 local ESOPIE_DEFAULT_RING = {
     uniqueid = 0,
     type = ESOPie.EntryType.Ring,
@@ -150,7 +153,7 @@ local ui = {
     initialized = false,
     nextUniqueID = 0,
     collectionPopulateCallbacks = {},
-    collectibleCategories = { names = {}, values = {}, collectibles = {} },
+    collectibleCategories = { names = {}, values = {}, tooltips = {}, collectibles = {} },
     actionChoices = {},
     actionChoicesValues = {},
     bindingRingChoices = {},
@@ -300,6 +303,22 @@ local function CollectionHasCategory(entry)
 end
 
 -------------------------------------------------------------------------------
+-- Tooltip Helpers
+
+local function ShowCollectibleTooltip(control, collectibleId)
+    InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+    ItemTooltip:SetCollectible(collectibleId, SHOW_NICKNAME, SHOW_PURCHASABLE_HINT, SHOW_BLOCK_REASON, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
+    ItemTooltipTopLevel:BringWindowToTop()
+end
+local function ShowGenericEmoteTooltip(control, emoteInfo)
+    InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+    ItemTooltip:AddLine(ZO_CachedStrFormat("<<Z:1>>", emoteInfo.displayName), TOOLTIP_TITLE_FONT, ZO_SELECTED_TEXT:UnpackRGB())
+    ZO_Tooltip_AddDivider(ItemTooltip)
+    ItemTooltip:AddLine(ZO_CachedStrFormat("Play the <<1>> emote.", ZO_SELECTED_TEXT:Colorize(emoteInfo.emoteSlashName)), TOOLTIP_DEFAULT_FONT, ZO_NORMAL_TEXT:UnpackRGB())
+    ItemTooltipTopLevel:BringWindowToTop()
+end
+
+-------------------------------------------------------------------------------
 -- Cached Data
 
 local function UpdateInternalCache()
@@ -320,12 +339,13 @@ local function PopulateCollectablesByCategory(categoryIds, unlockedOnly)
         local categoryName = GetCollectibleCategoryNameByCategoryId(categoryId)
         table.insert(ui.collectibleCategories.names, categoryName)
         table.insert(ui.collectibleCategories.values, categoryId)
-        local collectibles = { names = {}, values = {} }
+        local collectibles = { names = {}, values = {}, tooltips = {} }
         for index = 1, GetTotalCollectiblesByCategoryType(categoryId) do
             local collectibleId = GetCollectibleIdFromType(categoryId, index)
             if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
                 table.insert(collectibles.names, ZO_CachedStrFormat("<<1>>", GetCollectibleName(collectibleId)))
                 table.insert(collectibles.values, collectibleId)
+                table.insert(collectibles.tooltips, function(tooltipControl) ShowCollectibleTooltip(tooltipControl, collectibleId) end)
             end
         end
         ui.collectibleCategories.collectibles[categoryId] = collectibles
@@ -344,13 +364,20 @@ local function PopulateEmotes()
         table.insert(ui.collectibleCategories.names, categoryName)
         table.insert(ui.collectibleCategories.values, categoryId)
 
-        local collectibles = { names = {}, values = {} }
+        local collectibles = { names = {}, values = {}, tooltips = {} }
         local emotesList = PLAYER_EMOTE_MANAGER:GetEmoteListForType(categoryId)
         if emotesList then
             for _, emote in pairs(emotesList) do
                 local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emote)
-                table.insert(collectibles.names, ZO_CachedStrFormat("<<1>>", emoteInfo.displayName))
+                local emoteDisplayName = ZO_CachedStrFormat("<<1>>", emoteInfo.displayName)
+                table.insert(collectibles.names, emoteDisplayName)
                 table.insert(collectibles.values, emoteInfo.emoteId)
+                local emoteCollectibleId = GetEmoteCollectibleId(emoteInfo.emoteIndex)
+                if emoteCollectibleId then
+                    table.insert(collectibles.tooltips, function(tooltipControl) ShowCollectibleTooltip(tooltipControl, emoteCollectibleId) end)
+                else
+                    table.insert(collectibles.tooltips, function(tooltipControl) ShowGenericEmoteTooltip(tooltipControl, emoteInfo) end)
+                end
             end
         else
             LogDebug("No emote list for category %d", categoryId)
@@ -384,19 +411,15 @@ local function SelectInitialCollectionCategory()
 end
 
 local function UpdateCollectionsCache()
-    LogVerbose("UpdateCollectionsCache")
     ZO_ClearTable(ui.collectibleCategories.names)
     ZO_ClearTable(ui.collectibleCategories.values)
+    ZO_ClearTable(ui.collectibleCategories.tooltips)
     ZO_ClearTable(ui.collectibleCategories.collectibles)
     if IsCollectableAction(ui.currentEditing) then
-        LogVerbose("UpdateCollectionsCache-1")
         local actionType = ui.currentEditing.action
         local callback = ui.collectionPopulateCallbacks[actionType]
         if callback and type(callback) == "function" then
-            LogVerbose("UpdateCollectionsCache-2")
-            local names = {}
-            local values = {}
-            callback(names, values)
+            callback()
         else
             LogWarning("No populate callback for action <%s>", GetActionTypeString(actionType))
         end
@@ -409,15 +432,21 @@ end
 local function RebuildCollectionsDropdowns()
     local collectibleNames = {}
     local collectibleValues = {}
+    local collectibleTooltips = nil
     local currentCategory = ui.collectibleCategories.collectibles[ui.selectedCollectionCategory]
     if currentCategory then
         collectibleNames = currentCategory.names
         collectibleValues = currentCategory.values
+        if not ZO_IsTableEmpty(currentCategory.tooltips) then
+            collectibleTooltips = currentCategory.tooltips
+        end
     end
-    LogVerbose("%d Categories", #ui.collectibleCategories.values)
-    LogVerbose("> %d Collectibles", #collectibleValues)
-    UpdateDropdown("ESOPIE_SlotEdit_CollectionItem", collectibleNames, collectibleValues)
-    UpdateDropdown("ESOPIE_SlotEdit_CollectionCategory", ui.collectibleCategories.names, ui.collectibleCategories.values)
+    UpdateDropdown("ESOPIE_SlotEdit_CollectionItem", collectibleNames, collectibleValues, collectibleTooltips)
+    local categoryTooltips = nil
+    if not ZO_IsTableEmpty(ui.collectibleCategories.tooltips) then
+        categoryTooltips = ui.collectibleCategories.tooltips
+    end
+    UpdateDropdown("ESOPIE_SlotEdit_CollectionCategory", ui.collectibleCategories.names, ui.collectibleCategories.values, categoryTooltips)
 end
 
 local function RebuildRingDropdowns()
@@ -428,7 +457,7 @@ local function RebuildRingDropdowns()
     table.insert(ui.bindingRingValues, 0)
     for _, entry in pairs(ESOPie.db.entries) do
         if EntryIsRing(entry) then
-            table.insert(ui.bindingRingChoices, ZO_CachedStrFormat("<<1>>", entry.name))
+            table.insert(ui.bindingRingChoices, entry.name)
             table.insert(ui.bindingRingValues, entry.uniqueid)
         end
     end
@@ -534,21 +563,6 @@ function ESOPie:InitializeSettings()
     self.db = ZO_SavedVars:NewAccountWide(self.savedVars, self.savedVarsVersion, nil, ESOPIE_DB_DEFAULT)
     self:CleanOrphanedSlots()
 
-    local function OnPanelCreated(panel)
-        if panel ~= ESOPie.LAMPanel then return end
-        LogVerbose("OnPanelCreated")
-        InitNextID()
-        UpdateCollectionsCache()
-        RebuildAll()
-        ui.initialized = true
-    end
-
-    local function OnPanelOpened(panel)
-        if panel ~= ESOPie.LAMPanel then return end
-        LogVerbose("OnPanelOpened")
-        RefreshBindingWarning()
-    end
-
     local function OnConfirmRemoveEntry()
         if EntryIsRing(ui.currentEditing) then
             RemoveRing(ui.currentEditing.uniqueid)
@@ -566,6 +580,47 @@ function ESOPie:InitializeSettings()
         UpdateCollectionsCache()
         RebuildCollectionsDropdowns()
         LAM.util.RequestRefreshIfNeeded(ESOPie_SlotEdit_Submenu)
+    end
+
+    local function OnCollectionItemDropdownMouseEnter(control)
+        if control.m_data.tooltip then
+            if type(control.m_data.tooltip) == "function" then
+                control.m_data.tooltip(control) -- initialize tooltip with a function
+            elseif type(control.m_data.tooltip) == "string" then
+                InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+                SetTooltipText(ItemTooltip, control.m_data.tooltip)
+                ItemTooltipTopLevel:BringWindowToTop()
+            else
+                ClearTooltip(ItemTooltip)
+            end
+        else
+            ClearTooltip(ItemTooltip)
+        end
+    end
+
+    local function OnCollectionItemDropdownMouseExit(control)
+        ClearTooltip(ItemTooltip)
+    end
+
+    local function OnPanelCreated(panel)
+        if panel ~= ESOPie.LAMPanel then return end
+        LogVerbose("OnPanelCreated")
+
+        if ESOPIE_SlotEdit_CollectionItem and ESOPIE_SlotEdit_CollectionItem.scrollHelper then
+            ESOPIE_SlotEdit_CollectionItem.scrollHelper.OnMouseEnter = function(self, control) OnCollectionItemDropdownMouseEnter(control) end
+            ESOPIE_SlotEdit_CollectionItem.scrollHelper.OnMouseExit = function(self, control) OnCollectionItemDropdownMouseExit(control) end
+        end
+
+        InitNextID()
+        UpdateCollectionsCache()
+        RebuildAll()
+        ui.initialized = true
+    end
+
+    local function OnPanelOpened(panel)
+        if panel ~= ESOPie.LAMPanel then return end
+        LogVerbose("OnPanelOpened")
+        RefreshBindingWarning()
     end
 
     ui.collectionPopulateCallbacks[ESOPie.Action.PlayEmote] = PopulateEmotes
@@ -819,6 +874,7 @@ function ESOPie:InitializeSettings()
                 },
                 {
                     type = "dropdown",
+                    reference = "ESOPIE_SlotEdit_Action",
                     name = "Slot Action",
                     tooltip = "Select the action that should occur when this slot is activated.",
                     --sort = "value-up",

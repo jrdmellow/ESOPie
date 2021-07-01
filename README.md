@@ -3,7 +3,7 @@ ESOPie is a radial action-binding addon inspired by the WoW addon [OPie by cfxfo
 
 ESOPie provides up to 6 bindings to display rings of up to 12 usable slots much like the Quickslot feature.
 
-![ESOPie Ring Example](img/ringpreview.png)
+![ESOPie Ring Example](https://raw.githubusercontent.com/wiki/jrdmellow/ESOPie/images/ringpreview.png)
 
 See the [wiki](https://github.com/jrdmellow/ESOPie/wiki) for more information.
 

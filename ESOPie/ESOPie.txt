@@ -6,7 +6,7 @@
 ## Dependson LibAddonMenu-2.0>=32 LibDialog
 ## OptionalDependsOn: LibDebugLogger
 ## SavedVariables: ESOPieSavedVars
-## Author: Planetshine
+## Author: FiveStar
 ## Description: ESOPie is a radial action-binding addon inspired by the WoW addon OPie by cfxfox
 ;
 ;  This Add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates.

@@ -66,6 +66,11 @@ ESOPie.utils.IsCommandAction = function(entry)
     return entry.action == ESOPie.Action.ChatExec or entry.action == ESOPie.Action.CodeExec
 end
 
+ESOPie.utils.IsHouseAction = function(entry)
+    if not ESOPie.utils.EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.GoToHome
+end
+
 ESOPie.utils.IsCollectableAction = function(entry)
     if not ESOPie.utils.EntryIsSlot(entry) then return false end
     if      entry.action == ESOPie.Action.PlayEmote     then return true

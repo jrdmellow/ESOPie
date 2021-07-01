@@ -1,44 +1,111 @@
 local strings = {
-    -- General
+    -- Binding Menu
     SI_ESOPIE_TITLE = "ESOPie",
-    ESOPIE_TITLE = "ESOPie",
-    ESOPIE_BYLINE = "<<1>> <<2>> created by <<3>>.",
-
-    -- Settings
-    ESOPIE_DEFAULT_RINGNAME                     = "New Ring",
-    ESOPIE_DEFAULT_ACTIONNAME                   = "New Slot",
-    ESOPIE_DEFAULT_ROOTNAME                     = "Root",
-    ESOPIE_DEFAULT_SOCIALRING                   = "Social",
-    ESOPIE_DEFAULT_WAVEACTION                   = "Wave",
-    ESOPIE_DEFAULT_OPENEMOTES                   = "Emotes",
-
-    -- Settings UI
-    ESOPIE_SETTINGS_PANEL_NAME                  = "ESOPie",
-
-    -- Actions
-    ESOPIE_ACTION_NOOP                          = "No Action",
-    ESOPIE_ACTION_SUBRING                       = "Open Subring",
-    ESOPIE_ACTION_CHATEXEC                      = "Execute Chat Command",
-    ESOPIE_ACTION_CODEEXEC                      = "Execute Lua Code",
-    ESOPIE_ACTION_GOTOHOME                      = "Go Home",
-    ESOPIE_ACTION_PLAYEMOTE                     = "Do Emote",
-    ESOPIE_ACTION_PLAYMOMENTO                   = "Use Momento",
-    ESOPIE_ACTION_SUMMONALLY                    = "Summon Ally",
-    ESOPIE_ACTION_SETMOUNT                      = "Change Mount",
-    ESOPIE_ACTION_SETNCPET                      = "Change Non-Combat Pet",
-    ESOPIE_ACTION_SETCOSTUME                    = "Change Costume",
-    ESOPIE_ACTION_SETPOLYMORPH                  = "Change Polymorph",
-
-    -- Bindings
-    ESOPIE_BINDING_INTERACTIONLAYER             = "ESOPie",
-    ESOPIE_BINDING_CATEGORY_MENU                = "ESOPie (While Showing)",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_1          = "Open Ring 1 (Hold)",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_2          = "Open Ring 2 (Hold)",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_3          = "Open Ring 3 (Hold)",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_4          = "Open Ring 4 (Hold)",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_5          = "Open Ring 5 (Hold)",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_6          = "Open Ring 6 (Hold)",
-    SI_BINDING_NAME_ESOPIE_MENU_ACTIVATE_SLOT   = "Navigate to Slot",
+
+    -- Defaults
+    ESOPIE_SI_DEFAULT_RINGNAME                  = "New Ring",
+    ESOPIE_SI_DEFAULT_ACTIONNAME                = "New Slot",
+
+    -- Demo
+    ESOPIE_SI_DEFAULT_ROOT                      = "Root",
+    ESOPIE_SI_DEFAULT_SOCIAL                    = "Social",
+    ESOPIE_SI_DEFAULT_SHOWOFF                   = "Show Off",
+    ESOPIE_SI_DEFAULT_MUSIC                     = "Music",
+    ESOPIE_SI_DEFAULT_LUTE                      = "Lute",
+    ESOPIE_SI_DEFAULT_FLUTE                     = "Flute",
+    ESOPIE_SI_DEFAULT_DRUM                      = "Drum",
+    ESOPIE_SI_DEFAULT_SCORCH                    = "Scorch",
+    ESOPIE_SI_DEFAULT_FLEX                      = "Flex",
+    ESOPIE_SI_DEFAULT_GREET                     = "Greet",
+    ESOPIE_SI_DEFAULT_CLAP                      = "Clap",
+    ESOPIE_SI_DEFAULT_CONGRATULATE              = "Congratulate",
+
+    -- Actions
+    ESOPIE_SI_ACTION_NOOP                       = "No Action",
+    ESOPIE_SI_ACTION_SUBRING                    = "Navigate to Subring",
+    ESOPIE_SI_ACTION_CHATEXEC                   = "Execute Chat Command",
+    ESOPIE_SI_ACTION_CODEEXEC                   = "Execute Lua Code",
+    ESOPIE_SI_ACTION_GOTOHOME                   = "Teleport to Primary Home",
+    ESOPIE_SI_ACTION_PLAYEMOTE                  = "Do Emote",
+    ESOPIE_SI_ACTION_PLAYMOMENTO                = "Use Momento/Tool",
+    ESOPIE_SI_ACTION_SUMMONALLY                 = "Summon Ally",
+    ESOPIE_SI_ACTION_SETMOUNT                   = "Change Mount",
+    ESOPIE_SI_ACTION_SETNCPET                   = "Change Non-Combat Pet",
+    ESOPIE_SI_ACTION_SETCOSTUME                 = "Change Costume",
+    ESOPIE_SI_ACTION_SETPOLYMORPH               = "Change Polymorph",
+
+    -- Notifications
+    ESOPIE_SI_CHAT_NOCOMMAND                    = "Slot <<1>> has no chat command to execute.",
+    ESOPIE_SI_CHAT_INVALIDFIRSTCHAR             = "First character of command for slot <<1>> must be '/'.",
+    ESOPIE_SI_CHAT_COMMANDNOTSUPPORTED          = "ESOPie currently does not support this chat command. Hopefully soon!",
+    ESOPIE_SI_LUA_NOCODE                        = "Slot <<1>> has no code to execute.",
+    ESOPIE_SI_COLLECTIBLE_NOTUNLOCKED           = "<<1>> is not unlocked.",
+    ESOPIE_SI_FASTTRAVELUNAVAILABLE             = "Fast travel is not available right now.",
+    ESOPIE_SI_PRIMARYHOUSENOTSET                = "Primary house has not been set.",
+
+    -- Settings Menu
+    ESOPIE_SI_SETTINGS_PANEL_NAME               = "ESOPie",
+    ESOPIE_SI_SETTINGS_NOBINDINGSDETECTED       = "|cffff00Warning:|r No ring bindings have been detected. In order to use ESOPie at least one ring binding must be assigned.\nGo to the Controls settings and assign a key or button to at least one ESOPie ring.",
+    ESOPIE_SI_SETTINGS_GENERALMENU_NAME         = "General Options",
+    ESOPIE_SI_SETTINGS_CONFIGUREHEADER_NAME     = "Configure Rings and Slots",
+
+    ESOPIE_SI_SETTINGS_RINGBINDING1             = "Ring Binding 1",
+    ESOPIE_SI_SETTINGS_RINGBINDING2             = "Ring Binding 2",
+    ESOPIE_SI_SETTINGS_RINGBINDING3             = "Ring Binding 3",
+    ESOPIE_SI_SETTINGS_RINGBINDING4             = "Ring Binding 4",
+    ESOPIE_SI_SETTINGS_RINGBINDING5             = "Ring Binding 5",
+    ESOPIE_SI_SETTINGS_RINGBINDING6             = "Ring Binding 6",
+    ESOPIE_SI_SETTINGS_BINDINGDISABLED          = "Disabled",
+
+    ESOPIE_SI_SETTINGS_NEWRING                  = "New Ring",
+    ESOPIE_SI_SETTINGS_NEWRING_TT               = "Add a new ring.\nNote: You will need to either set a binding or create a sub-ring slot to access the new ring.",
+    ESOPIE_SI_SETTINGS_ENTRYSELECT              = "Entry to Configure",
+    ESOPIE_SI_SETTINGS_ENTRYSELECT_TT           = "Select the ring or slot to configure.",
+    ESOPIE_SI_SETTINGS_ENTRYNAME                = "Name",
+    ESOPIE_SI_SETTINGS_ENTRYNAME_TT             = "Enter the display name of the selected entry.",
+    ESOPIE_SI_SETTINGS_NEWSLOT                  = "New Slot",
+    ESOPIE_SI_SETTINGS_NEWSLOT_TT               = "Add a new slot to this ring. (Maximum of <<1>> per ring)",
+    ESOPIE_SI_SETTINGS_REMOVE                   = "Remove",
+    ESOPIE_SI_SETTINGS_REMOVE_TT                = "Remove the selected entry",
+    ESOPIE_SI_SETTINGS_CONFIRMREMOVE            = "Are you sure you want to |cff0000permanently remove|r |c55eeff<<1>>|r?",
+    ESOPIE_SI_SETTINGS_CONFIRMADDITIONAL        = "Removing this ring will also remove the following slots;",
+    ESOPIE_SI_SETTINGS_CONFIRMPERMANENCE        = "This cannot be undone.",
+    ESOPIE_SI_SETTINGS_CONFIRMREMOVE_TITLE      = "Remove Entry",
+    ESOPIE_SI_SETTINGS_CONFIRMCHANGEACTION      = "Are you sure you want to change the action of |c55eeff<<1>>|r to |cffee55<<2>>|r?\n\nYou will lose any settings associated with the current |cffee55<<3>>|r action.",
+    ESOPIE_SI_SETTINGS_CONFIRMCHANGEACTION_TITLE= "Change Slot Action",
+
+    ESOPIE_SI_SETTINGS_CONFIGURESLOTMENU        = "Configure Selected Slot",
+    ESOPIE_SI_SETTINGS_BROWSEICON               = "Browse for Icon",
+    ESOPIE_SI_SETTINGS_BROWSEICON_TT            = "Select an icon for the slot.",
+    ESOPIE_SI_SETTINGS_ICONPATH                 = "Icon Path",
+    ESOPIE_SI_SETTINGS_ICONPATH_TT              = "Any icon can be used if you know the path.",
+    ESOPIE_SI_SETTINGS_MAGICICONDESC            = "Tip: Select the first icon in the list or remove the path below to use an automatic icon.\nESOPie will use the icon of the collection item instead.",
+    ESOPIE_SI_SETTINGS_SLOTACTION               = "Slot Action",
+    ESOPIE_SI_SETTINGS_SLOTACTION_TT            = "Select the action that should occur when this slot is activated.",
+
+    ESOPIE_SI_SETTINGS_SUBRINGMENU              = "Subring",
+    ESOPIE_SI_SETTINGS_SUBRING                  = "Subring",
+    ESOPIE_SI_SETTINGS_SUBRING_TT               = "Subring to open",
+
+
+    ESOPIE_SI_SETTINGS_COLLECTIONMENU           = "Collection",
+    ESOPIE_SI_SETTINGS_COLLECTIONCATEGORY       = "Category",
+    ESOPIE_SI_SETTINGS_COLLECTIONCATEGORY_TT    = "Collectable category to select from.",
+    ESOPIE_SI_SETTINGS_COLLECTIBLE              = "Collectable",
+    ESOPIE_SI_SETTINGS_COLLECTIBLE_TT           = "Collectable to use when activated.",
+
+    ESOPIE_SI_SETTINGS_COMMANDMENU              = "Command",
+    ESOPIE_SI_SETTINGS_COMMAND                  = "Command",
+    ESOPIE_SI_SETTINGS_COMMAND_TT               = "Chat command or Lua code to execute when activated.",
+
+    -- Collection Tooltips
+    ESOPIE_SI_TOOLTIP_DOEMOTE                   = "Do the <<1>> emote.",
 }
 
 for stringId, stringValue in pairs(strings) do

@@ -3,8 +3,8 @@ local L = GetString
 ESOPie = ESOPie or {}
 ESOPie.name = "ESOPie"
 ESOPie.version = "0.2.2 BETA"
-ESOPie.author = "Planetshine Games"
-ESOPie.url = "https://github.com/jrdmellow/ESOPie"
+ESOPie.author = "FiveStar"
+ESOPie.url = "https://github.com/jrdmellow/ESOPie/wiki"
 ESOPie.slashCommand = "/esopie"
 ESOPie.settingsPanelName = "ESOPieSettingsPanel"
 ESOPie.prefix = string.format("[%s]: ", ESOPie.name)
@@ -40,18 +40,18 @@ ESOPie.Action = {
     SetPolymorph = 12,
 }
 ESOPie.actionNames = {
-    [ESOPie.Action.Noop]                = L(ESOPIE_ACTION_NOOP),
-    [ESOPie.Action.Submenu]             = L(ESOPIE_ACTION_SUBRING),
-    [ESOPie.Action.ChatExec]            = L(ESOPIE_ACTION_CHATEXEC),
-    [ESOPie.Action.CodeExec]            = L(ESOPIE_ACTION_CODEEXEC),
-    [ESOPie.Action.GoToHome]            = L(ESOPIE_ACTION_GOTOHOME),
-    [ESOPie.Action.PlayEmote]           = L(ESOPIE_ACTION_PLAYEMOTE),
-    [ESOPie.Action.PlayMomento]         = L(ESOPIE_ACTION_PLAYMOMENTO),
-    [ESOPie.Action.SummonAlly]          = L(ESOPIE_ACTION_SUMMONALLY),
-    [ESOPie.Action.SetMount]            = L(ESOPIE_ACTION_SETMOUNT),
-    [ESOPie.Action.SetVanityPet]        = L(ESOPIE_ACTION_SETNCPET),
-    [ESOPie.Action.SetCostume]          = L(ESOPIE_ACTION_SETCOSTUME),
-    [ESOPie.Action.SetPolymorph]        = L(ESOPIE_ACTION_SETPOLYMORPH),
+    [ESOPie.Action.Noop]                = L(ESOPIE_SI_ACTION_NOOP),
+    [ESOPie.Action.Submenu]             = L(ESOPIE_SI_ACTION_SUBRING),
+    [ESOPie.Action.ChatExec]            = L(ESOPIE_SI_ACTION_CHATEXEC),
+    [ESOPie.Action.CodeExec]            = L(ESOPIE_SI_ACTION_CODEEXEC),
+    [ESOPie.Action.GoToHome]            = L(ESOPIE_SI_ACTION_GOTOHOME),
+    [ESOPie.Action.PlayEmote]           = L(ESOPIE_SI_ACTION_PLAYEMOTE),
+    [ESOPie.Action.PlayMomento]         = L(ESOPIE_SI_ACTION_PLAYMOMENTO),
+    [ESOPie.Action.SummonAlly]          = L(ESOPIE_SI_ACTION_SUMMONALLY),
+    [ESOPie.Action.SetMount]            = L(ESOPIE_SI_ACTION_SETMOUNT),
+    [ESOPie.Action.SetVanityPet]        = L(ESOPIE_SI_ACTION_SETNCPET),
+    [ESOPie.Action.SetCostume]          = L(ESOPIE_SI_ACTION_SETCOSTUME),
+    [ESOPie.Action.SetPolymorph]        = L(ESOPIE_SI_ACTION_SETPOLYMORPH),
 }
 -- Temporary: Limit visible actions and sort
 ESOPie.supportedActions = {
@@ -64,12 +64,14 @@ ESOPie.supportedActions = {
     ESOPie.Action.SetVanityPet,
     ESOPie.Action.SetCostume,
     ESOPie.Action.SetPolymorph,
+    ESOPie.Action.GoToHome,
     ESOPie.Action.ChatExec,
-    --ESOPie.Action.CodeExec,
+    ESOPie.Action.CodeExec,
 }
 ESOPie.showCancelButton = false
 ESOPie.maxRingBindings = 6
 ESOPie.maxVisibleSlots = 12
+ESOPie.openRingDelay = 50
 ESOPie.displayedRing = nil
 ESOPie.selectedSlotInfo = nil
 ESOPie.executionCallbacks = {}
@@ -89,8 +91,7 @@ if LibDebugLogger then
     LOG_LEVEL_ERROR = LibDebugLogger.LOG_LEVEL_ERROR
 end
 
-local ESOPIE_SUBRING_OPEN_DELAY_MS = 50
-
+-- TODO: figure out a way to support these
 local ESOPIE_INACCESSIBLE_SLASH_COMMANDS = {
     "/s", "/say", "/y", "/yell", "/t", "/tell", "/w", "/whisper", "/r", "/reply",
     "/respond", "/e", "/emote", "/me", "/p", "/party", "/group",
@@ -115,7 +116,6 @@ end
 function ESOPie_Notify(fmt, ...)
     local str = string.format(fmt, ...)
     CHAT_SYSTEM:AddMessage(str)
-    ESOPie_DevLog(LOG_LEVEL_DEBUG, str)
 end
 
 ESOPie.DevLog = ESOPie_DevLog
@@ -136,13 +136,10 @@ local Notify = ESOPie.Notify
 -------------------------------------------------------------------------------
 -- ESOPie Handler
 
-function ESOPie:ExecuteChatCommand(commandStr)
-    if not commandStr then Notify("Slot has no chat command to execute.") return end
-    if not commandStr:find("/") == 1 then
-        Notify("First character of a chat command must be '/': %s", commandStr)
-        return
-    end
-    LogVerbose("Chat command: %s", commandStr)
+function ESOPie:ExecuteChatCommand(entry, commandStr)
+    assert(entry)
+    if not commandStr then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_NOCOMMAND), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
+    if not commandStr:find("/") == 1 then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_INVALIDFIRSTCHAR), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
     local command = nil
     local args = nil
     local p = commandStr:find(" ")
@@ -152,34 +149,77 @@ function ESOPie:ExecuteChatCommand(commandStr)
     else
         command = commandStr
     end
-
     for i, cmd in pairs(ESOPIE_INACCESSIBLE_SLASH_COMMANDS) do
         if cmd == command then
-            Notify("ESOPie currently does not support this chat command. Hopefully soon!")
+            Notify(L(ESOPIE_SI_CHAT_COMMANDNOTSUPPORTED))
             return
         end
     end
-    SLASH_COMMANDS[command](args)
+    SLASH_COMMANDS[command](args) -- Hacky. Better way?
 end
 
-function ESOPie:ExecuteCustomCommand(luaCode)
-    if not luaCode then Notify("Slot has no code to execute.") return end
-    LogWarning("Custom command -- TODO")
+function ESOPie:ExecuteCustomCommand(entry, luaCode)
+    assert(entry)
+    if not luaCode then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_LUA_NOCODE), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
+    local f = assert(zo_loadstring(luaCode))
+    f()
 end
 
-function ESOPie:ExecuteEmote(itemId)
-    if not itemId or type(itemId) ~= "number" then LogWarning("Payload is invalid.") return end
+function ESOPie:ExecuteEmote(entry, itemId)
+    assert(entry and itemId)
+    if not itemId or type(itemId) ~= "number" then LogWarning("Emote payload is invalid.") return end
     local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(itemId)
     if emoteInfo then
         PlayEmoteByIndex(emoteInfo.emoteIndex)
     end
 end
 
-function ESOPie:ExecuteUseCollectible(itemId)
+function ESOPie:ExecuteUseCollectible(entry, itemId)
+    assert(entry and itemId)
+    if not itemId or type(itemId) ~= "number" then LogWarning("Collectible payload is invalid.") return end
     if IsCollectibleUnlocked(itemId) then
         UseCollectible(itemId, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
     else
-        Notify("Ally %s is not unlocked.", ZO_CachedStrFormat("<<1>>", GetCollectibleName(itemId)))
+        Notify(ZO_CachedStrFormat(L(ESOPIE_SI_COLLECTIBLE_NOTUNLOCKED), ZO_SELECTED_TEXT:Colorize(GetCollectibleName(itemId))))
+    end
+end
+
+function ESOPie:ExecuteGoToHome(entry, data)
+    assert(entry)
+    if not CanLeaveCurrentLocationViaTeleport() then
+        Notify(L(ESOPIE_SI_FASTTRAVELUNAVAILABLE))
+        return
+    end
+    local targetPlayer = nil
+    local houseId = nil
+    if entry.data and type(entry.data) == "table" then
+        if entry.data.houseId and type(entry.data.houseId) == "number" then
+            houseId = entry.data.houseId
+        end
+        if entry.data.targetPlayer and type(entry.data.targetPlayer) == "string" then
+            targetPlayer = entry.data.targetPlayer
+        end
+    end
+    if not houseId then
+        houseId = GetHousingPrimaryHouse()
+        if not houseId then
+            LogWarning("No valid house for slot %s", entry.name)
+            return
+        end
+    end
+    if targetPlayer == GetDisplayName() then
+        targetPlayer = nil
+    end
+    local collectibleId = GetCollectibleIdForHouse(houseId)
+    if not IsCollectibleUnlocked(collectibleId) then
+        LogVerbose("Not unlocked %d", collectibleId)
+        Notify(ZO_CachedStrFormat(L(ESOPIE_SI_COLLECTIBLE_NOTUNLOCKED), ZO_SELECTED_TEXT:Colorize(GetCollectibleName(collectibleId))))
+        return
+    end
+    if targetPlayer then
+        JumpToSpecificHouse(targetPlayer, houseId)
+    else
+        RequestJumpToHouse(houseId)
     end
 end
 
@@ -202,18 +242,18 @@ function ESOPie:Initialize()
         self.executionCallbacks[action] = handler
     end
 
-    RegisterHandler(self.Action.Noop, function(data) end) -- Do nothing.
-    RegisterHandler(self.Action.Submenu, function(data) end) -- Do nothing; handled by navigate callback.
-    RegisterHandler(self.Action.ChatExec, function(data) self:ExecuteChatCommand(data) end)
-    RegisterHandler(self.Action.CodeExec, function(data) self:ExecuteCustomCommand(data) end)
-    RegisterHandler(self.Action.GoToHome, function(data) self:ExecuteGoToHome(data) end)
-    RegisterHandler(self.Action.PlayEmote, function(data) self:ExecuteEmote(data) end)
-    RegisterHandler(self.Action.PlayMomento, function(data) self:ExecuteUseCollectible(data) end)
-    RegisterHandler(self.Action.SummonAlly, function(data) self:ExecuteUseCollectible(data) end)
-    RegisterHandler(self.Action.SetMount, function(data) self:ExecuteUseCollectible(data) end)
-    RegisterHandler(self.Action.SetVanityPet, function(data) self:ExecuteUseCollectible(data) end)
-    RegisterHandler(self.Action.SetCostume, function(data) self:ExecuteUseCollectible(data) end)
-    RegisterHandler(self.Action.SetPolymorph, function(data) self:ExecuteUseCollectible(data) end)
+    RegisterHandler(self.Action.Noop, function(entry, data) end) -- Do nothing.
+    RegisterHandler(self.Action.Submenu, function(entry, data) end) -- Do nothing; handled by navigate callback.
+    RegisterHandler(self.Action.ChatExec, function(entry, data) self:ExecuteChatCommand(entry, data) end)
+    RegisterHandler(self.Action.CodeExec, function(entry, data) self:ExecuteCustomCommand(entry, data) end)
+    RegisterHandler(self.Action.GoToHome, function(entry, data) self:ExecuteGoToHome(entry, data) end)
+    RegisterHandler(self.Action.PlayEmote, function(entry, data) self:ExecuteEmote(entry, data) end)
+    RegisterHandler(self.Action.PlayMomento, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
+    RegisterHandler(self.Action.SummonAlly, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
+    RegisterHandler(self.Action.SetMount, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
+    RegisterHandler(self.Action.SetVanityPet, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
+    RegisterHandler(self.Action.SetCostume, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
+    RegisterHandler(self.Action.SetPolymorph, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
 
     local actionsSize = 0
     for _, action in pairs(self.Action) do
@@ -232,9 +272,17 @@ end
 
 function ESOPie:ResolveEntryIcon(entry)
     if self.utils.EntryIsSlot(entry) then
-        if entry.icon and entry.icon == ESOPIE_ICON_SLOT_DEFAULT then
+        if not entry.icon or entry.icon == "" then
             if self.utils.IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
                 return GetCollectibleIcon(entry.data)
+            elseif self.utils.IsHouseAction(entry) then
+                local houseId = nil
+                if entry.data and entry.data.houseId and type(entry.data.houseId) == "number" then
+                    houseId = entry.data.houseId
+                else
+                    houseId = GetHousingPrimaryHouse()
+                end
+                if houseId then return GetCollectibleIcon(GetCollectibleIdForHouse(houseId)) end
             end
         else
             return entry.icon
@@ -274,8 +322,8 @@ function ESOPie:OnSlotActivate(selectedEntry)
 
     local handler = self.executionCallbacks[slotInfo.action]
     if handler then
-        LogVerbose("%s => %s (%s)", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), slotInfo.data)
-        handler(slotInfo.data)
+        LogVerbose("%s => %s (%s)", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), slotInfo.data or "nil")
+        handler(slotInfo, slotInfo.data)
     else
         LogDebug("Unhandled action %s", self.utils.GetActionTypeString(slotInfo.action))
     end
@@ -290,7 +338,7 @@ function ESOPie:OnSlotNavigate(selectedEntry)
         self.displayedRing = self:GetRing(slotInfo.data)
         if self.displayedRing then
             -- delay the call slightly
-            zo_callLater(function() ESOPie.pieRoot:ShowMenu() end, ESOPIE_SUBRING_OPEN_DELAY_MS)
+            zo_callLater(function() ESOPie.pieRoot:ShowMenu() end, self.openRingDelay)
         else
             self.pieRoot:StopInteraction()
             LogError("Displayed ring not valid")
@@ -300,7 +348,7 @@ end
 
 function ESOPie:OnPopulateSlots()
     local ring = ESOPie.displayedRing
-    if not ring or not ring.slots then Notify("Displayed ring not valid.") return end
+    if not ring or not ring.slots then LogWarning("Displayed ring not valid.") return end
 
     local maxSlots = ESOPie.maxVisibleSlots
     if ESOPie.showCancelButton then
@@ -344,7 +392,8 @@ EVENT_MANAGER:RegisterForEvent(ESOPie.name, EVENT_ADD_ON_LOADED, function(event,
     end
 end)
 
-
+--[[
 SLASH_COMMANDS["/esopie_reset"] = function(args)
     ESOPie:ResetToDefault()
 end
+]]--

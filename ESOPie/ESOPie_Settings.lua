@@ -190,12 +190,12 @@ end
 -- Entry Utilities
 
 local function RemoveEntry(uniqueid, ensureType)
-    local entryIndex = FindEntryIndexByID(uniqueid, ESOPie.db.entries, ensureType)
+    local entryIndex = ESOPie.utils.FindEntryIndexByID(uniqueid, ESOPie.db.entries, ensureType)
     if entryIndex then table.remove(ESOPie.db.entries, entryIndex) end
 end
 
 local function RemoveRing(uniqueid)
-    local ring = FindEntryByID(uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+    local ring = ESOPie.utils.FindEntryByID(uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
     if ring then
         for _, slotId in pairs(ring.slots) do
             RemoveEntry(slotId, ESOPie.EntryType.Slot)
@@ -207,7 +207,7 @@ end
 local function RemoveSlot(uniqueid)
     RemoveEntry(uniqueid, ESOPie.EntryType.Slot)
     for _, entry in pairs(ESOPie.db.entries) do
-        if EntryIsRing(entry) then
+        if ESOPie.utils.EntryIsRing(entry) then
             local removeIndex = nil
             for index, id in pairs(entry.slots) do
                 if id == uniqueid then
@@ -222,7 +222,7 @@ local function RemoveSlot(uniqueid)
 end
 
 local function CreateNewSlot()
-    if EntryIsRing(ui.currentEditing) then
+    if ESOPie.utils.EntryIsRing(ui.currentEditing) then
         local newSlotInfo = {}
         ZO_DeepTableCopy(ESOPIE_DEFAULT_SLOTINFO, newSlotInfo)
         newSlotInfo.uniqueid = GetNextID()
@@ -244,17 +244,27 @@ end
 -------------------------------------------------------------------------------
 -- Action Utilities
 
-local function GetCategoryFromData(actionType, data)
-    if actionType == ESOPie.Action.PlayEmote then
-        if data and type(data) == "number" then
-            local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(data)
+local function GetCategoryFromEntry(entry)
+    if entry.action == ESOPie.Action.PlayEmote then
+        if entry.data and type(entry.data) == "number" then
+            local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(entry.data)
             if emoteInfo then
                 return emoteInfo.emoteCategory
             end
         end
-        return EMOTE_CATEGORY_CEREMONIAL
+    elseif ESOPie.utils.CollectionHasCategory(entry) then
+        if entry.data and type(entry.data) == "number" then
+            local topLevelIndex, subIndex = GetCategoryInfoFromCollectibleId(entry.data)
+            local categoryId = GetCollectibleCategoryId(topLevelIndex, subIndex)
+            return categoryId
+        end
     end
-    return 0
+
+    if ui.collectibleCategories.values and #ui.collectibleCategories.values > 0 then
+        return ui.collectibleCategories.values[1]
+    else
+        return 0
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -281,34 +291,59 @@ local function UpdateInternalCache()
     ZO_ClearTable(ui.actionChoicesValues)
     for _, action in pairs(ESOPie.supportedActions) do
         if action and action > 0 then -- Don't include NOOP
-            local actionName = GetActionTypeString(action) or string.format("Invalid<%d>", action)
+            local actionName = ESOPie.utils.GetActionTypeString(action) or string.format("Invalid<%d>", action)
             table.insert(ui.actionChoices, actionName)
             table.insert(ui.actionChoicesValues, action)
         end
     end
 end
 
-local function PopulateCollectablesByCategory(categoryIds, unlockedOnly)
-    for _, categoryId in pairs(categoryIds) do
-        local categoryName = GetCollectibleCategoryNameByCategoryId(categoryId)
+local function PopulateCollectablesByCategory(categoryTypes, unlockedOnly)
+    for _, categoryType in pairs(categoryTypes) do
+        local categoryName = L("SI_COLLECTIBLECATEGORYTYPE", categoryType)
         table.insert(ui.collectibleCategories.names, categoryName)
-        table.insert(ui.collectibleCategories.values, categoryId)
+        table.insert(ui.collectibleCategories.values, categoryType)
         local collectibles = { names = {}, values = {}, tooltips = {} }
-        for index = 1, GetTotalCollectiblesByCategoryType(categoryId) do
-            local collectibleId = GetCollectibleIdFromType(categoryId, index)
+        for index = 1, GetTotalCollectiblesByCategoryType(categoryType) do
+            local collectibleId = GetCollectibleIdFromType(categoryType, index)
             if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
+                if not ui.collectibleCategories.collectibles[categoryType] then
+                    ui.collectibleCategories.collectibles[categoryType] = { names = {}, values = {}, tooltips = {} }
+                end
+                local collectibles = ui.collectibleCategories.collectibles[categoryType]
                 table.insert(collectibles.names, ZO_CachedStrFormat("<<1>>", GetCollectibleName(collectibleId)))
                 table.insert(collectibles.values, collectibleId)
                 table.insert(collectibles.tooltips, function(tooltipControl) ShowCollectibleTooltip(tooltipControl, collectibleId) end)
             end
         end
-        ui.collectibleCategories.collectibles[categoryId] = collectibles
     end
 end
 
-local function PopulateAllies()
-    LogVerbose("PopulateAllies")
-    PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, COLLECTIBLE_CATEGORY_TYPE_COMPANION }, true)
+local function PopulateCollectablesBySubCategory(categoryTypes, unlockedOnly)
+    for topLevelIndex = 1, GetNumCollectibleCategories() do
+        local categoryName, subCategories, _, _, _, _ = GetCollectibleCategoryInfo(topLevelIndex)
+        for subIndex = 1, subCategories do
+            local categoryId = GetCollectibleCategoryId(topLevelIndex, subIndex)
+            local subName, numCollectibles, _, _ = GetCollectibleSubCategoryInfo(topLevelIndex, subIndex)
+            for collectibleIndex = 1, numCollectibles do
+                local collectibleId = GetCollectibleId(topLevelIndex, subIndex, collectibleIndex)
+                local categoryType = GetCollectibleCategoryType(collectibleId)
+                if ESOPie.utils.NumericTableContains(categoryTypes, categoryType) then
+                    if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
+                        if not ui.collectibleCategories.collectibles[categoryId] then
+                            table.insert(ui.collectibleCategories.names, subName)
+                            table.insert(ui.collectibleCategories.values, categoryId)
+                            ui.collectibleCategories.collectibles[categoryId] = { names = {}, values = {}, tooltips = {} }
+                        end
+                        local collectibles = ui.collectibleCategories.collectibles[categoryId]
+                        table.insert(collectibles.names, ZO_CachedStrFormat("<<1>>", GetCollectibleName(collectibleId)))
+                        table.insert(collectibles.values, collectibleId)
+                        table.insert(collectibles.tooltips, function(tooltipControl) ShowCollectibleTooltip(tooltipControl, collectibleId) end)
+                    end
+                end
+            end
+        end
+    end
 end
 
 local function PopulateEmotes()
@@ -354,8 +389,8 @@ local function UpdateDropdown(controlName, choices, values, tooltips)
 end
 
 local function SelectInitialCollectionCategory()
-    if IsCollectableAction(ui.currentEditing) and CollectionHasCategory(ui.currentEditing) then
-        ui.selectedCollectionCategory = GetCategoryFromData(ui.currentEditing.action, ui.currentEditing.data)
+    if ESOPie.utils.IsCollectableAction(ui.currentEditing) and ESOPie.utils.CollectionHasCategory(ui.currentEditing) then
+        ui.selectedCollectionCategory = GetCategoryFromEntry(ui.currentEditing)
     else
         ui.selectedCollectionCategory = 0
         if #ui.collectibleCategories.values > 0 then
@@ -369,13 +404,13 @@ local function UpdateCollectionsCache()
     ZO_ClearTable(ui.collectibleCategories.values)
     ZO_ClearTable(ui.collectibleCategories.tooltips)
     ZO_ClearTable(ui.collectibleCategories.collectibles)
-    if IsCollectableAction(ui.currentEditing) then
+    if ESOPie.utils.IsCollectableAction(ui.currentEditing) then
         local actionType = ui.currentEditing.action
         local callback = ui.collectionPopulateCallbacks[actionType]
         if callback and type(callback) == "function" then
             callback()
         else
-            LogWarning("No populate callback for action <%s>", GetActionTypeString(actionType))
+            LogWarning("No populate callback for action <%s>", ESOPie.utils.GetActionTypeString(actionType))
         end
     else
         LogVerbose("Not editing a slot")
@@ -410,7 +445,7 @@ local function RebuildRingDropdowns()
     table.insert(ui.bindingRingChoices, "Disabled")
     table.insert(ui.bindingRingValues, 0)
     for _, entry in pairs(ESOPie.db.entries) do
-        if EntryIsRing(entry) then
+        if ESOPie.utils.EntryIsRing(entry) then
             table.insert(ui.bindingRingChoices, entry.name)
             table.insert(ui.bindingRingValues, entry.uniqueid)
         end
@@ -423,12 +458,12 @@ local function RebuildRingDropdowns()
     ZO_ClearTable(ui.configurationChoices)
     ZO_ClearTable(ui.configurationValues)
     for _, ringId in pairs(ui.bindingRingValues) do
-        local ring = FindEntryByID(ringId, ESOPie.db.entries, ESOPie.EntryType.Ring)
+        local ring = ESOPie.utils.FindEntryByID(ringId, ESOPie.db.entries, ESOPie.EntryType.Ring)
         if ring then
             table.insert(ui.configurationChoices, ZO_CachedStrFormat("|cffffff<<1>>|r (Ring)", ring.name))
             table.insert(ui.configurationValues, ring.uniqueid)
             for _, slotId in pairs(ring.slots) do
-                local slot = FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
+                local slot = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
                 if slot then
                     table.insert(ui.configurationChoices, ZO_CachedStrFormat("-> |c777777<<1>>|r", slot.name))
                     table.insert(ui.configurationValues, slot.uniqueid)
@@ -478,9 +513,9 @@ function ESOPie:CleanOrphanedSlots()
     local rings = {}
     local slots = {}
     for index, entry in pairs(ESOPie.db.entries) do
-        if EntryIsRing(entry) then
+        if ESOPie.utils.EntryIsRing(entry) then
             table.insert(rings, entry)
-        elseif EntryIsSlot(entry) then
+        elseif ESOPie.utils.EntryIsSlot(entry) then
             table.insert(slots, entry)
         else
             LogVerbose("Invalid slot type in entries at index %d", index)
@@ -518,12 +553,12 @@ function ESOPie:InitializeSettings()
     self:CleanOrphanedSlots()
 
     local function OnConfirmRemoveEntry()
-        if EntryIsRing(ui.currentEditing) then
+        if ESOPie.utils.EntryIsRing(ui.currentEditing) then
             RemoveRing(ui.currentEditing.uniqueid)
-        elseif EntryIsSlot(ui.currentEditing) then
+        elseif ESOPie.utils.EntryIsSlot(ui.currentEditing) then
             RemoveSlot(ui.currentEditing.uniqueid)
         end
-        ui.currentEditing = FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
+        ui.currentEditing = ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
         RebuildRingDropdowns()
         LAM.util.RequestRefreshIfNeeded(ESOPie.LAMPanel)
     end
@@ -583,16 +618,16 @@ function ESOPie:InitializeSettings()
 
     ui.collectionPopulateCallbacks[ESOPie.Action.PlayEmote] = PopulateEmotes
     ui.collectionPopulateCallbacks[ESOPie.Action.PlayMomento] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_MEMENTO }, true) end
-    ui.collectionPopulateCallbacks[ESOPie.Action.SetMount] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_MOUNT }, true) end
-    ui.collectionPopulateCallbacks[ESOPie.Action.SetVanityPet] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_VANITY_PET }, true) end
-    ui.collectionPopulateCallbacks[ESOPie.Action.SummonAlly] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, COLLECTIBLE_CATEGORY_TYPE_COMPANION }, true) end
-    ui.collectionPopulateCallbacks[ESOPie.Action.SetCostume] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_COSTUME }, true) end
-    ui.collectionPopulateCallbacks[ESOPie.Action.SetPolymorph] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_POLYMORPH }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetMount] = function() PopulateCollectablesBySubCategory({ COLLECTIBLE_CATEGORY_TYPE_MOUNT }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetVanityPet] = function() PopulateCollectablesBySubCategory({ COLLECTIBLE_CATEGORY_TYPE_VANITY_PET }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SummonAlly] = function() PopulateCollectablesBySubCategory({ COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, COLLECTIBLE_CATEGORY_TYPE_COMPANION }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetCostume] = function() PopulateCollectablesBySubCategory({ COLLECTIBLE_CATEGORY_TYPE_COSTUME }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetPolymorph] = function() PopulateCollectablesBySubCategory({ COLLECTIBLE_CATEGORY_TYPE_POLYMORPH }, true) end
 
 
     UpdateInternalCache()
 
-    ui.currentEditing = FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
+    ui.currentEditing = ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
 
     local optionsTable = {
         -- TODO: Localize
@@ -721,7 +756,7 @@ function ESOPie:InitializeSettings()
                 return 0
             end,
             setFunc = function(value)
-                ui.currentEditing = FindEntryByID(value, ESOPie.db.entries)
+                ui.currentEditing = ESOPie.utils.FindEntryByID(value, ESOPie.db.entries)
                 UpdateCollectionsCache()
                 RebuildAll()
             end,
@@ -751,7 +786,7 @@ function ESOPie:InitializeSettings()
             name = "New Slot",
             tooltip = ZO_CachedStrFormat("Add a new slot to this ring. (Maximum of <<1>> per ring)", ESOPie.maxVisibleSlots),
             width = "half",
-            disabled = function() return not EntryIsRing(ui.currentEditing) or #ui.currentEditing.slots >= ESOPie.maxVisibleSlots end,
+            disabled = function() return not ESOPie.utils.EntryIsRing(ui.currentEditing) or #ui.currentEditing.slots >= ESOPie.maxVisibleSlots end,
             func = function()
                 CreateNewSlot()
                 RebuildRingDropdowns()
@@ -768,10 +803,10 @@ function ESOPie:InitializeSettings()
             func = function()
                 local entryName = ui.currentEditing.name or ("Entry" .. tostring(ui.currentEditing.uniqueid))
                 local confirmStr = ZO_CachedStrFormat("Are you sure you want to |cff0000permanently remove|r |c55eeff<<1>>|r?", entryName)
-                if EntryIsRing(ui.currentEditing) then
+                if ESOPie.utils.EntryIsRing(ui.currentEditing) then
                     local slotNames = {}
                     for _, slotId in pairs(ui.currentEditing.slots) do
-                        local slot = FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
+                        local slot = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
                         if slot then
                             table.insert(slotNames, ZO_CachedStrFormat(" - |c55eeff<<1>>|r", slot.name or ("Slot" .. slotId)))
                         end
@@ -791,7 +826,7 @@ function ESOPie:InitializeSettings()
             type = "submenu",
             name = "Configure Selected Slot",
             reference = "ESOPie_SlotEdit_Submenu",
-            disabled = function() return not EntryIsSlot(ui.currentEditing) end,
+            disabled = function() return not ESOPie.utils.EntryIsSlot(ui.currentEditing) end,
             controls = {
                 {
                     type = "iconpicker",
@@ -858,8 +893,8 @@ function ESOPie:InitializeSettings()
                         if ui.currentEditing then
                             if ui.currentEditing.action ~= ESOPie.Action.Noop and ui.currentEditing.data ~= nil then
                                 local entryName = ui.currentEditing.name or ("Slot" .. tostring(ui.currentEditing.uniqueid))
-                                local currentActionName = GetActionTypeString(ui.currentEditing.action)
-                                local newActionName = GetActionTypeString(value)
+                                local currentActionName = ESOPie.utils.GetActionTypeString(ui.currentEditing.action)
+                                local newActionName = ESOPie.utils.GetActionTypeString(value)
                                 local confirmStr = ZO_CachedStrFormat("Are you sure you want to change the action of |c55eeff<<1>>|r to |cffee55<<2>>|r?\n\nYou will lose any settings associated with the current |cffee55<<3>>|r action.", entryName, newActionName, currentActionName)
                                 LibDialog:RegisterDialog(ESOPie.name, "ChangeActionTypeDialog", "Change Slot Action", confirmStr, function() OnConfirmChangeSlotAction(value) end, nil, nil, true)
                                 LibDialog:ShowDialog(ESOPie.name, "ChangeActionTypeDialog")
@@ -872,7 +907,7 @@ function ESOPie:InitializeSettings()
                 {
                     type = "submenu",
                     name = "Subring",
-                    disabled = function() return not IsSubringAction(ui.currentEditing) end,
+                    disabled = function() return not ESOPie.utils.IsSubringAction(ui.currentEditing) end,
                     controls = {
                         {
                             type = "dropdown",
@@ -884,14 +919,14 @@ function ESOPie:InitializeSettings()
                             choices = ui.bindingRingChoices,
                             choicesValues = ui.bindingRingChoices,
                             getFunc = function()
-                                if IsSubringAction(ui.currentEditing) then
+                                if ESOPie.utils.IsSubringAction(ui.currentEditing) then
                                     return ui.currentEditing.data
                                 else
                                     return 0
                                 end
                             end,
                             setFunc = function(value)
-                                if IsSubringAction(ui.currentEditing) then
+                                if ESOPie.utils.IsSubringAction(ui.currentEditing) then
                                     ui.currentEditing.data = value
                                 end
                             end,
@@ -901,7 +936,7 @@ function ESOPie:InitializeSettings()
                 {
                     type = "submenu",
                     name = "Collection",
-                    disabled = function() return not IsCollectableAction(ui.currentEditing) end,
+                    disabled = function() return not ESOPie.utils.IsCollectableAction(ui.currentEditing) end,
                     controls = {
                         {
                             type = "dropdown",
@@ -912,15 +947,15 @@ function ESOPie:InitializeSettings()
                             scrollable = true,
                             choices = {},
                             choicesValues = {},
-                            disabled = function() return not (IsCollectableAction(ui.currentEditing) and CollectionHasCategory(ui.currentEditing)) end,
+                            disabled = function() return not (ESOPie.utils.IsCollectableAction(ui.currentEditing) and ESOPie.utils.CollectionHasCategory(ui.currentEditing)) end,
                             getFunc = function()
-                                if IsCollectableAction(ui.currentEditing) then
+                                if ESOPie.utils.IsCollectableAction(ui.currentEditing) then
                                     return ui.selectedCollectionCategory
                                 end
                                 return 0
                             end,
                             setFunc = function(value)
-                                if IsCollectableAction(ui.currentEditing) then
+                                if ESOPie.utils.IsCollectableAction(ui.currentEditing) then
                                     ui.selectedCollectionCategory = value
                                     RebuildCollectionsDropdowns()
                                 end
@@ -936,14 +971,14 @@ function ESOPie:InitializeSettings()
                             choices = {},
                             choicesValues = {},
                             getFunc = function()
-                                if IsCollectableAction(ui.currentEditing) and type(ui.currentEditing.data) == "number" then
+                                if ESOPie.utils.IsCollectableAction(ui.currentEditing) and type(ui.currentEditing.data) == "number" then
                                     return ui.currentEditing.data
                                 else
                                     return 0
                                 end
                             end,
                             setFunc = function(value)
-                                if IsCollectableAction(ui.currentEditing) then
+                                if ESOPie.utils.IsCollectableAction(ui.currentEditing) then
                                     ui.currentEditing.data = value
                                     --ui.currentEditing.icon = GetCollectibleIcon(value)
                                 end
@@ -954,7 +989,7 @@ function ESOPie:InitializeSettings()
                 {
                     type = "submenu",
                     name = "Command",
-                    disabled = function() return not IsCommandAction(ui.currentEditing) end,
+                    disabled = function() return not ESOPie.utils.IsCommandAction(ui.currentEditing) end,
                     controls = {
                         {
                             type = "editbox",
@@ -962,14 +997,14 @@ function ESOPie:InitializeSettings()
                             tooltip = "Chat command or Lua code to execute when activated.",
                             isMultiline = true,
                             getFunc = function()
-                                if IsCommandAction(ui.currentEditing) and type(ui.currentEditing.data) == "string" then
+                                if ESOPie.utils.IsCommandAction(ui.currentEditing) and type(ui.currentEditing.data) == "string" then
                                     return ui.currentEditing.data
                                 else
                                     return ""
                                 end
                             end,
                             setFunc = function(value)
-                                if IsCommandAction(ui.currentEditing) then
+                                if ESOPie.utils.IsCommandAction(ui.currentEditing) then
                                     ui.currentEditing.data = value
                                 end
                             end,

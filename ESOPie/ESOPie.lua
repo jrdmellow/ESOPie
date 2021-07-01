@@ -192,11 +192,11 @@ function ESOPie:Initialize()
 
     local function RegisterHandler(action, handler)
         if self.executionCallbacks[action] then
-            LogError("Handler already registered for %s", GetActionTypeString(action))
+            LogError("Handler already registered for %s", ESOPie_GetActionTypeString(action))
             return
         end
         if type(handler) ~= "function" then
-            LogError("Handler is not a function for %s", GetActionTypeString(action))
+            LogError("Handler is not a function for %s", ESOPie_GetActionTypeString(action))
             return
         end
         self.executionCallbacks[action] = handler
@@ -231,9 +231,9 @@ function ESOPie:Initialize()
 end
 
 function ESOPie:ResolveEntryIcon(entry)
-    if EntryIsSlot(entry) then
+    if self.utils.EntryIsSlot(entry) then
         if entry.icon and entry.icon == ESOPIE_ICON_SLOT_DEFAULT then
-            if IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
+            if self.utils.IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
                 return GetCollectibleIcon(entry.data)
             end
         else
@@ -245,7 +245,7 @@ end
 
 function ESOPie:GetRing(id)
     if self.db and self.db.entries then
-        local ring = FindEntryByID(id, self.db.entries, ESOPie.EntryType.Ring)
+        local ring = self.utils.FindEntryByID(id, self.db.entries, ESOPie.EntryType.Ring)
         if not ring then
             LogError("Ring <%d> not found.", id)
         end
@@ -265,7 +265,7 @@ end
 
 function ESOPie:GetSelectedSlotFromEntry(entry)
     if not entry or not entry.data then return nil end
-    return FindEntryByID(entry.data.uniqueid, self.db.entries, ESOPie.EntryType.Slot)
+    return self.utils.FindEntryByID(entry.data.uniqueid, self.db.entries, ESOPie.EntryType.Slot)
 end
 
 function ESOPie:OnSlotActivate(selectedEntry)
@@ -274,17 +274,17 @@ function ESOPie:OnSlotActivate(selectedEntry)
 
     local handler = self.executionCallbacks[slotInfo.action]
     if handler then
-        LogVerbose("%s => %s (%s)", slotInfo.name, GetActionTypeString(slotInfo.action), slotInfo.data)
+        LogVerbose("%s => %s (%s)", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), slotInfo.data)
         handler(slotInfo.data)
     else
-        LogDebug("Unhandled action %s", GetActionTypeString(slotInfo.action))
+        LogDebug("Unhandled action %s", self.utils.GetActionTypeString(slotInfo.action))
     end
 end
 
 function ESOPie:OnSlotNavigate(selectedEntry)
     local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for navigate") return end
-    LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, GetActionTypeString(slotInfo.action), slotInfo.data)
+    LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), slotInfo.data)
     if slotInfo.action == ESOPie.Action.Submenu then
         self.pieRoot.menuControl.selectedLabel:SetText("")
         self.displayedRing = self:GetRing(slotInfo.data)
@@ -308,7 +308,7 @@ function ESOPie:OnPopulateSlots()
     end
     local slotCount = math.min(maxSlots, #ring.slots)
     for i=1, slotCount do
-        local slotInfo = FindEntryByID(ring.slots[i], self.db.entries)
+        local slotInfo = self.utils.FindEntryByID(ring.slots[i], self.db.entries)
         if slotInfo then
             -- TODO: check visibility condition
             local name = slotInfo.name

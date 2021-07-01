@@ -189,16 +189,6 @@ end
 -------------------------------------------------------------------------------
 -- Entry Utilities
 
-local function EntryIsRing(entry)
-    if not entry then return false end
-    return entry.type == ESOPie.EntryType.Ring
-end
-
-local function EntryIsSlot(entry)
-    if not entry then return false end
-    return entry.type == ESOPie.EntryType.Slot
-end
-
 local function RemoveEntry(uniqueid, ensureType)
     local entryIndex = FindEntryIndexByID(uniqueid, ESOPie.db.entries, ensureType)
     if entryIndex then table.remove(ESOPie.db.entries, entryIndex) end
@@ -267,41 +257,6 @@ local function GetCategoryFromData(actionType, data)
     return 0
 end
 
-local function IsSubringAction(entry)
-    if not EntryIsSlot(entry) then return false end
-    return entry.action == ESOPie.Action.Submenu
-end
-
-local function IsCommandAction(entry)
-    if not EntryIsSlot(entry) then return false end
-    return entry.action == ESOPie.Action.ChatExec or entry.action == ESOPie.Action.CodeExec
-end
-
-local function IsEmoteAction(entry)
-    if not EntryIsSlot(entry) then return false end
-    return entry.action == ESOPie.Action.PlayEmote
-end
-
-local function IsAllyAction(entry)
-    if not EntryIsSlot(entry) then return false end
-    return entry.action == ESOPie.Action.SummonAlly
-end
-
-local function IsCollectableAction(entry)
-    if not EntryIsSlot(entry) then return false end
-    return IsEmoteAction(entry) or IsAllyAction(entry)
-end
-
-local function CollectionHasCategory(entry)
-    if not EntryIsSlot(entry) then return false end
-    if      entry.action == ESOPie.Action.PlayEmote     then return true
-    elseif  entry.action == ESOPie.Action.SummonAlly    then return true
-    elseif  entry.action == ESOPie.Action.SetMount      then return true
-    elseif  entry.action == ESOPie.Action.SetVanityPet  then return true
-    end
-    return false
-end
-
 -------------------------------------------------------------------------------
 -- Tooltip Helpers
 
@@ -334,7 +289,6 @@ local function UpdateInternalCache()
 end
 
 local function PopulateCollectablesByCategory(categoryIds, unlockedOnly)
-    LogVerbose("PopulateCollectablesByCategory(%s)", table.concat(categoryIds, ", "))
     for _, categoryId in pairs(categoryIds) do
         local categoryName = GetCollectibleCategoryNameByCategoryId(categoryId)
         table.insert(ui.collectibleCategories.names, categoryName)
@@ -623,8 +577,18 @@ function ESOPie:InitializeSettings()
         RefreshBindingWarning()
     end
 
+    --[[
+    COLLECTIBLE_CATEGORY_TYPE_HOUSE
+    ]]--
+
     ui.collectionPopulateCallbacks[ESOPie.Action.PlayEmote] = PopulateEmotes
-    ui.collectionPopulateCallbacks[ESOPie.Action.SummonAlly] = PopulateAllies
+    ui.collectionPopulateCallbacks[ESOPie.Action.PlayMomento] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_MEMENTO }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetMount] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_MOUNT }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetVanityPet] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_VANITY_PET }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SummonAlly] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, COLLECTIBLE_CATEGORY_TYPE_COMPANION }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetCostume] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_COSTUME }, true) end
+    ui.collectionPopulateCallbacks[ESOPie.Action.SetPolymorph] = function() PopulateCollectablesByCategory({ COLLECTIBLE_CATEGORY_TYPE_POLYMORPH }, true) end
+
 
     UpdateInternalCache()
 
@@ -856,8 +820,12 @@ function ESOPie:InitializeSettings()
                     name = "Icon Path",
                     tooltip = "Any icon can be used if you know the path.",
                     isMultiline = false,
+                    disabled = function() return not ui.currentEditing or ui.currentEditing.icon == ESOPIE_ICON_SLOT_DEFAULT end,
                     getFunc = function()
                         if ui.currentEditing then
+                            if ui.currentEditing.icon == ESOPIE_ICON_SLOT_DEFAULT then
+                                return "Automatic"
+                            end
                             return ui.currentEditing.icon
                         end
                         return ESOPIE_ICON_SLOT_DEFAULT
@@ -911,7 +879,7 @@ function ESOPie:InitializeSettings()
                             reference = "ESOPIE_SlotEdit_Subring",
                             name = "Subring",
                             tooltip = "Subring to open",
-                            sort = "value-up",
+                            sort = "name-up",
                             scrollable = true,
                             choices = ui.bindingRingChoices,
                             choicesValues = ui.bindingRingChoices,
@@ -929,31 +897,6 @@ function ESOPie:InitializeSettings()
                             end,
                         },
                     },
-                },
-                {
-                    type = "submenu",
-                    name = "Command",
-                    disabled = function() return not IsCommandAction(ui.currentEditing) end,
-                    controls = {
-                        {
-                            type = "editbox",
-                            name = "Command",
-                            tooltip = "Chat command or Lua code to execute when activated.",
-                            isMultiline = true,
-                            getFunc = function()
-                                if IsCommandAction(ui.currentEditing) and type(ui.currentEditing.data) == "string" then
-                                    return ui.currentEditing.data
-                                else
-                                    return ""
-                                end
-                            end,
-                            setFunc = function(value)
-                                if IsCommandAction(ui.currentEditing) then
-                                    ui.currentEditing.data = value
-                                end
-                            end,
-                        },
-                    }
                 },
                 {
                     type = "submenu",
@@ -1007,6 +950,31 @@ function ESOPie:InitializeSettings()
                             end,
                         },
                     },
+                },
+                {
+                    type = "submenu",
+                    name = "Command",
+                    disabled = function() return not IsCommandAction(ui.currentEditing) end,
+                    controls = {
+                        {
+                            type = "editbox",
+                            name = "Command",
+                            tooltip = "Chat command or Lua code to execute when activated.",
+                            isMultiline = true,
+                            getFunc = function()
+                                if IsCommandAction(ui.currentEditing) and type(ui.currentEditing.data) == "string" then
+                                    return ui.currentEditing.data
+                                else
+                                    return ""
+                                end
+                            end,
+                            setFunc = function(value)
+                                if IsCommandAction(ui.currentEditing) then
+                                    ui.currentEditing.data = value
+                                end
+                            end,
+                        },
+                    }
                 },
             },
         },

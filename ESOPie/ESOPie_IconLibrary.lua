@@ -2770,3 +2770,4 @@ ESOPIE_ICON_LIBRARY = {
     "/esoui/art/icons/achievements_indexicon_summary_over.dds",
     "/esoui/art/icons/achievements_indexicon_summary_up.dds",
 }
+ESOPIE_ICON_LIBRARY_DEFAULT = ESOPIE_ICON_LIBRARY[1]

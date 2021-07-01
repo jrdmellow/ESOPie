@@ -59,3 +59,57 @@ function FindEntryIndexByName(name, haystack)
     end
     return nil
 end
+
+function EntryIsRing(entry)
+    if not entry then return false end
+    return entry.type == ESOPie.EntryType.Ring
+end
+
+function EntryIsSlot(entry)
+    if not entry then return false end
+    return entry.type == ESOPie.EntryType.Slot
+end
+
+function IsSubringAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.Submenu
+end
+
+function IsCommandAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.ChatExec or entry.action == ESOPie.Action.CodeExec
+end
+
+function IsEmoteAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.PlayEmote
+end
+
+function IsAllyAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    return entry.action == ESOPie.Action.SummonAlly
+end
+
+function IsCollectableAction(entry)
+    if not EntryIsSlot(entry) then return false end
+    if      entry.action == ESOPie.Action.PlayEmote     then return true
+    elseif  entry.action == ESOPie.Action.PlayMomento   then return true
+    elseif  entry.action == ESOPie.Action.SummonAlly    then return true
+    elseif  entry.action == ESOPie.Action.SetMount      then return true
+    elseif  entry.action == ESOPie.Action.SetVanityPet  then return true
+    elseif  entry.action == ESOPie.Action.SetCostume    then return true
+    elseif  entry.action == ESOPie.Action.SetPolymorph  then return true
+    end
+end
+
+function CollectionHasCategory(entry)
+    if not EntryIsSlot(entry) then return false end
+    if      entry.action == ESOPie.Action.PlayEmote     then return true
+    elseif  entry.action == ESOPie.Action.SummonAlly    then return true
+    --elseif  entry.action == ESOPie.Action.SetMount      then return true
+    --elseif  entry.action == ESOPie.Action.SetVanityPet  then return true
+    elseif  entry.action == ESOPie.Action.SetCostume    then return true
+    elseif  entry.action == ESOPie.Action.SetPolymorph  then return true
+    end
+    return false
+end

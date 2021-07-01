@@ -36,6 +36,8 @@ ESOPie.Action = {
     SummonAlly = 8,
     SetMount = 9,
     SetVanityPet = 10,
+    SetCostume = 11,
+    SetPolymorph = 12,
 }
 ESOPie.actionNames = {
     [ESOPie.Action.Noop]                = L(ESOPIE_ACTION_NOOP),
@@ -48,13 +50,20 @@ ESOPie.actionNames = {
     [ESOPie.Action.SummonAlly]          = L(ESOPIE_ACTION_SUMMONALLY),
     [ESOPie.Action.SetMount]            = L(ESOPIE_ACTION_SETMOUNT),
     [ESOPie.Action.SetVanityPet]        = L(ESOPIE_ACTION_SETNCPET),
+    [ESOPie.Action.SetCostume]          = L(ESOPIE_ACTION_SETCOSTUME),
+    [ESOPie.Action.SetPolymorph]        = L(ESOPIE_ACTION_SETPOLYMORPH),
 }
 -- Temporary: Limit visible actions and sort
 ESOPie.supportedActions = {
     ESOPie.Action.Noop,
     ESOPie.Action.Submenu,
     ESOPie.Action.PlayEmote,
+    ESOPie.Action.PlayMomento,
     ESOPie.Action.SummonAlly,
+    ESOPie.Action.SetMount,
+    ESOPie.Action.SetVanityPet,
+    ESOPie.Action.SetCostume,
+    ESOPie.Action.SetPolymorph,
     ESOPie.Action.ChatExec,
     --ESOPie.Action.CodeExec,
 }
@@ -91,7 +100,7 @@ local ESOPIE_INACCESSIBLE_SLASH_COMMANDS = {
     "/dezone", "/frzone", "/enzone", "/jpzone", "/ruzone",
 }
 
-ESOPIE_ICON_SLOT_DEFAULT = "/EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
+ESOPIE_ICON_SLOT_DEFAULT = ESOPIE_ICON_LIBRARY_DEFAULT or "/EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
 ESOPIE_ICON_SLOT_EMPTY = "/EsoUI/Art/Quickslots/quickslot_emptySlot.dds"
 ESOPIE_ICON_SLOT_CANCEL = "/EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds"
 
@@ -166,24 +175,12 @@ function ESOPie:ExecuteEmote(itemId)
     end
 end
 
-function ESOPie:ExecuteMomento(itemId)
-    LogWarning("TODO: ExecuteMomento<%s>", tostring(itemId))
-end
-
-function ESOPie:ExecuteSummonAlly(itemId)
+function ESOPie:ExecuteUseCollectible(itemId)
     if IsCollectibleUnlocked(itemId) then
         UseCollectible(itemId, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
     else
         Notify("Ally %s is not unlocked.", ZO_CachedStrFormat("<<1>>", GetCollectibleName(itemId)))
     end
-end
-
-function ESOPie:ExecuteSetMount(itemId)
-    LogWarning("TODO: ExecuteSetMount<%s>", tostring(itemId))
-end
-
-function ESOPie:ExecuteSetVanityPet(itemId)
-    LogWarning("TODO: ExecuteSetVanityPet<%s>", tostring(itemId))
 end
 
 function ESOPie:Initialize()
@@ -211,17 +208,19 @@ function ESOPie:Initialize()
     RegisterHandler(self.Action.CodeExec, function(data) self:ExecuteCustomCommand(data) end)
     RegisterHandler(self.Action.GoToHome, function(data) self:ExecuteGoToHome(data) end)
     RegisterHandler(self.Action.PlayEmote, function(data) self:ExecuteEmote(data) end)
-    RegisterHandler(self.Action.PlayMomento, function(data) self:ExecuteMomento(data) end)
-    RegisterHandler(self.Action.SummonAlly, function(data) self:ExecuteSummonAlly(data) end)
-    RegisterHandler(self.Action.SetMount, function(data) self:ExecuteSetMount(data) end)
-    RegisterHandler(self.Action.SetVanityPet, function(data) self:ExecuteSetVanityPet(data) end)
+    RegisterHandler(self.Action.PlayMomento, function(data) self:ExecuteUseCollectible(data) end)
+    RegisterHandler(self.Action.SummonAlly, function(data) self:ExecuteUseCollectible(data) end)
+    RegisterHandler(self.Action.SetMount, function(data) self:ExecuteUseCollectible(data) end)
+    RegisterHandler(self.Action.SetVanityPet, function(data) self:ExecuteUseCollectible(data) end)
+    RegisterHandler(self.Action.SetCostume, function(data) self:ExecuteUseCollectible(data) end)
+    RegisterHandler(self.Action.SetPolymorph, function(data) self:ExecuteUseCollectible(data) end)
 
     local actionsSize = 0
     for _, action in pairs(self.Action) do
         actionsSize = actionsSize + 1
     end
-    local actionNamesSize = table.getn(self.actionNames)
-    local callbacksSize = table.getn(self.executionCallbacks)
+    local actionNamesSize = #self.actionNames
+    local callbacksSize = #self.executionCallbacks
     if actionsSize ~= callbacksSize then
         LogWarning("Action and execution callback size mismatch (%d : %d).", actionsSize, callbacksSize)
     end
@@ -229,6 +228,19 @@ function ESOPie:Initialize()
         LogWarning("Action and names size mismatch (%d : %d).", actionsSize, actionNamesSize)
     end
     LogInfo("%s %s initalized.", self.name, self.version)
+end
+
+function ESOPie:ResolveEntryIcon(entry)
+    if EntryIsSlot(entry) then
+        if entry.icon and entry.icon == ESOPIE_ICON_SLOT_DEFAULT then
+            if IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
+                return GetCollectibleIcon(entry.data)
+            end
+        else
+            return entry.icon
+        end
+    end
+    return ESOPIE_ICON_SLOT_DEFAULT
 end
 
 function ESOPie:GetRing(id)
@@ -245,7 +257,7 @@ function ESOPie:GetRing(id)
 end
 
 function ESOPie:GetRootRing(index)
-    if index <= table.getn(self.db.rootRings) then
+    if index <= #self.db.rootRings then
         return self:GetRing(self.db.rootRings[index])
     end
     return nil
@@ -274,13 +286,13 @@ function ESOPie:OnSlotNavigate(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for navigate") return end
     LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, GetActionTypeString(slotInfo.action), slotInfo.data)
     if slotInfo.action == ESOPie.Action.Submenu then
-        self.pieRoot:StopInteraction()
         self.pieRoot.menuControl.selectedLabel:SetText("")
         self.displayedRing = self:GetRing(slotInfo.data)
         if self.displayedRing then
             -- delay the call slightly
-            zo_callLater(function() ESOPie.pieRoot:StartInteraction() end, ESOPIE_SUBRING_OPEN_DELAY_MS)
+            zo_callLater(function() ESOPie.pieRoot:ShowMenu() end, ESOPIE_SUBRING_OPEN_DELAY_MS)
         else
+            self.pieRoot:StopInteraction()
             LogError("Displayed ring not valid")
         end
     end
@@ -294,18 +306,19 @@ function ESOPie:OnPopulateSlots()
     if ESOPie.showCancelButton then
         maxSlots = maxSlots - 1
     end
-    for i=1, math.min(maxSlots, #ring.slots) do -- TODO: Handle more than 8 slots somehow. Another binding?
+    local slotCount = math.min(maxSlots, #ring.slots)
+    for i=1, slotCount do
         local slotInfo = FindEntryByID(ring.slots[i], self.db.entries)
         if slotInfo then
             -- TODO: check visibility condition
             local name = slotInfo.name
-            local icon = slotInfo.icon
+            local icon = self:ResolveEntryIcon(slotInfo)
             if name == nil or name == '' then name = "Slot " .. i end
             if icon == nil or icon == '' then icon = ESOPIE_ICON_SLOT_DEFUALT end
             self.pieRoot:AddSlot(name, icon, icon, slotInfo.uniqueid)
         end
     end
-    if ESOPie.showCancelButton then
+    if ESOPie.showCancelButton or slotCount == 1 then -- RadialMenu needs at least 2 items
         self.pieRoot:AddSlot(L(SI_RADIAL_MENU_CANCEL_BUTTON), ESOPIE_ICON_SLOT_CANCEL, ESOPIE_ICON_SLOT_CANCEL, 0)
     end
 end

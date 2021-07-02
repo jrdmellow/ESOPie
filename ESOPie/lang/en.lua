@@ -1,12 +1,15 @@
 local strings = {
     -- Binding Menu
     SI_ESOPIE_TITLE = "ESOPie",
-    SI_BINDING_NAME_ESOPIE_OPEN_RING_1          = "Open Ring 1 (Hold)",
-    SI_BINDING_NAME_ESOPIE_OPEN_RING_2          = "Open Ring 2 (Hold)",
-    SI_BINDING_NAME_ESOPIE_OPEN_RING_3          = "Open Ring 3 (Hold)",
-    SI_BINDING_NAME_ESOPIE_OPEN_RING_4          = "Open Ring 4 (Hold)",
-    SI_BINDING_NAME_ESOPIE_OPEN_RING_5          = "Open Ring 5 (Hold)",
-    SI_BINDING_NAME_ESOPIE_OPEN_RING_6          = "Open Ring 6 (Hold)",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_1          = "Ring 1",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_2          = "Ring 2",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_3          = "Ring 3",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_4          = "Ring 4",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_5          = "Ring 5",
+    SI_BINDING_NAME_ESOPIE_OPEN_RING_6          = "Ring 6",
+    ESOPIE_SI_LAYER_INTERACTION                 = "Ring Interaction",
+    SI_BINDING_NAME_ESOPIE_NAVIGATE_INTERACT    = "Navigate to Subring",
+    SI_BINDING_NAME_ESOPIE_CANCEL_INTERACT      = "Cancel",
 
     -- Defaults
     ESOPIE_SI_DEFAULT_RINGNAME                  = "New Ring",

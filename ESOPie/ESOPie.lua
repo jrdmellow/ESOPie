@@ -11,12 +11,16 @@ ESOPie.prefix = string.format("[%s]: ", ESOPie.name)
 ESOPie.savedVars = "ESOPieSavedVars"
 ESOPie.savedVarsVersion = 4
 ESOPie.logger = nil
-ESOPie.actionLayerName = "RadialMenu"
+ESOPie.actionLayerName = "ESOPieInteractionLayer"
 ESOPie.radialAnimation = nil --"DefaultRadialMenuAnimation" -- Disabled the animation to keep it snappy.
 ESOPie.entryAnimation = "SelectableItemRadialMenuEntryAnimation"
 ESOPie.EntryType = {
     Ring = 1,
     Slot = 2,
+}
+ESOPie.InteractMode = {
+    Hold = 1,
+    Toggle = 2,
 }
 ESOPie.CollectionType = {
     Allies = 1,
@@ -74,6 +78,7 @@ ESOPie.maxVisibleSlots = 12
 ESOPie.openRingDelay = 50
 ESOPie.displayedRing = nil
 ESOPie.selectedSlotInfo = nil
+ESOPie.activeBindingIndex = nil
 ESOPie.executionCallbacks = {}
 
 local LOG_LEVEL_VERBOSE = "V"
@@ -230,6 +235,8 @@ function ESOPie:Initialize()
     self.pieRoot:SetSlotNavigateCallback(function(selectedEntry) self:OnSlotNavigate(selectedEntry) end)
     self.pieRoot:SetPopulateSlotsCallback(function() self:OnPopulateSlots() end)
 
+    self.interactionLayer = ZO_ActionLayerFragment:New(self.actionLayerName)
+
     local function RegisterHandler(action, handler)
         if self.executionCallbacks[action] then
             LogError("Handler already registered for %s", ESOPie_GetActionTypeString(action))
@@ -291,6 +298,14 @@ function ESOPie:ResolveEntryIcon(entry)
     return ESOPIE_ICON_SLOT_DEFAULT
 end
 
+function ESOPie:GetActiveControlSettings()
+    if IsInGamepadPreferredMode() then
+        return self.db.controlOptions["gamepad"]
+    else
+        return self.db.controlOptions["keyboard"]
+    end
+end
+
 function ESOPie:GetRing(id)
     if self.db and self.db.entries then
         local ring = self.utils.FindEntryByID(id, self.db.entries, ESOPie.EntryType.Ring)
@@ -343,6 +358,9 @@ function ESOPie:OnSlotNavigate(selectedEntry)
             self.pieRoot:StopInteraction()
             LogError("Displayed ring not valid")
         end
+    elseif IsInGamepadPreferredMode() then
+        self:OnSlotActivate(selectedEntry)
+        self.pieRoot:StopInteraction()
     end
 end
 
@@ -371,16 +389,74 @@ function ESOPie:OnPopulateSlots()
     end
 end
 
-function ESOPie:OnHoldMenuOpen(ringIndex)
-    self.currentSlotInfo = nil
-    self.displayedRing = self:GetRootRing(ringIndex)
-    if self.displayedRing then
-        self.pieRoot:StartInteraction()
+function ESOPie:ShowRing(ringIndex)
+    if not self.pieRoot:IsInteracting() then
+        self.currentSlotInfo = nil
+        self.displayedRing = self:GetRootRing(ringIndex)
+        if self.displayedRing then
+            self.activeBindingIndex = ringIndex
+            PushActionLayerByName(self.actionLayerName)
+            self.pieRoot:StartInteraction()
+        end
+    else
+        LogWarning("Cannot open ring binding %d. Ring binding %d is already active", ringIndex, self.activeBindingIndex)
     end
 end
 
-function ESOPie:OnHoldMenuClose()
-    self.pieRoot:StopInteraction()
+function ESOPie:HideRing(ringIndex)
+    if self.pieRoot:IsInteracting() then
+        assert(self.activeBindingIndex)
+        if self.activeBindingIndex == ringIndex then
+            self.activeBindingIndex = nil
+            RemoveActionLayerByName(self.actionLayerName)
+            self.pieRoot:StopInteraction()
+        else
+            LogWarning("Cannot hide ring binding %d. Ring binding %d is currently active.", ringIndex, self.activeBindingIndex)
+        end
+    end
+end
+
+function ESOPie:BeginInteractHold(ringIndex)
+    self:ShowRing(ringIndex)
+end
+
+function ESOPie:EndInteractHold(ringIndex)
+    self:HideRing(ringIndex)
+end
+
+function ESOPie:ToggleInteract(ringIndex)
+    if self.pieRoot:IsInteracting() then
+        self:HideRing(ringIndex)
+    else
+        self:ShowRing(ringIndex)
+    end
+end
+
+-------------------------------------------------------------------------------
+-- Binding Callbacks
+
+function ESOPie:OnRingBindingPress(ringIndex)
+    local interactMode = self:GetActiveControlSettings().bindingInteractMode
+    if interactMode == self.InteractMode.Hold then
+        self:BeginInteractHold(ringIndex)
+    else
+        self:ToggleInteract(ringIndex)
+    end
+end
+
+function ESOPie:OnRingBindingRelease(ringIndex)
+    local interactMode = self:GetActiveControlSettings().bindingInteractMode
+    if interactMode == self.InteractMode.Hold then
+        self:EndInteractHold(ringIndex)
+    end
+end
+
+function ESOPie:OnNavigateInteraction()
+    self:OnSlotNavigate(self.pieRoot.currentSelectedEntry)
+end
+
+function ESOPie:OnCancelInteraction()
+    self.pieRoot:CancelSelection()
 end
 
 -------------------------------------------------------------------------------

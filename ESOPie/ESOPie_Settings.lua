@@ -154,6 +154,14 @@ local ESOPIE_DB_DEFAULT = {
             ["slots"] = { 9, 10, 11 },
         },
     },
+    controlOptions = {
+        ["keyboard"] = {
+            ["bindingInteractMode"] = ESOPie.InteractMode.Hold
+        },
+        ["gamepad"] = {
+            ["bindingInteractMode"] = ESOPie.InteractMode.Toggle
+        }
+    },
     ["rootRings"] = { 12, 13, 0, 0, 0, 0 },
     ["savedVersion"] = ESOPie.savedVarsVersion,
 }

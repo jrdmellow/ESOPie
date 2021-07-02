@@ -118,6 +118,10 @@ function ESOPie_RadialMenuController:ShowMenu()
     RETICLE:RequestHidden(true)
 end
 
+function ESOPie_RadialMenuController:IsInteracting()
+    return self.isInteracting and SCENE_MANAGER:IsShowing("hud")
+end
+
 function ESOPie_RadialMenuController:PrepareForInteraction()
     if not SCENE_MANAGER:IsShowing("hud") then
         return false

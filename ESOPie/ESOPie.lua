@@ -331,7 +331,7 @@ function ESOPie:GetSelectedSlotFromEntry(entry)
     return self.utils.FindEntryByID(entry.data.uniqueid, self.db.entries, ESOPie.EntryType.Slot)
 end
 
-function ESOPie:OnSlotActivate(selectedEntry)
+function ESOPie:ExecuteSlotAction(selectedEntry)
     local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for activate") return end
 
@@ -341,6 +341,13 @@ function ESOPie:OnSlotActivate(selectedEntry)
         handler(slotInfo, slotInfo.data)
     else
         LogDebug("Unhandled action %s", self.utils.GetActionTypeString(slotInfo.action))
+    end
+end
+
+function ESOPie:OnSlotActivate(selectedEntry)
+    local interactMode = self:GetActiveControlSettings().bindingInteractMode
+    if interactMode == ESOPie.InteractMode.Hold then
+        self:ExecuteSlotAction(selectedEntry)
     end
 end
 
@@ -358,9 +365,12 @@ function ESOPie:OnSlotNavigate(selectedEntry)
             self.pieRoot:StopInteraction()
             LogError("Displayed ring not valid")
         end
-    elseif IsInGamepadPreferredMode() then
-        self:OnSlotActivate(selectedEntry)
-        self.pieRoot:StopInteraction()
+    else
+        local interactMode = self:GetActiveControlSettings().bindingInteractMode
+        if interactMode == ESOPie.InteractMode.Toggle then
+            self:ExecuteSlotAction(selectedEntry)
+            self.pieRoot:StopInteraction()
+        end
     end
 end
 
@@ -395,7 +405,9 @@ function ESOPie:ShowRing(ringIndex)
         self.displayedRing = self:GetRootRing(ringIndex)
         if self.displayedRing then
             self.activeBindingIndex = ringIndex
-            PushActionLayerByName(self.actionLayerName)
+            if IsInGamepadPreferredMode() then
+                PushActionLayerByName(self.actionLayerName)
+            end
             self.pieRoot:StartInteraction()
         end
     else

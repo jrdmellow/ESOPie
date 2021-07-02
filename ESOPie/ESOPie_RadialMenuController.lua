@@ -32,7 +32,7 @@ function ESOPie_RadialMenuController:Initialize(control, entryTemplate, animatio
     control:SetHandler("OnUpdate", function() self:OnUpdate() end)
     self.menu:SetCustomControlSetUpFunction(SetupEntryControl)
     self.menu:SetOnSelectionChangedCallback(OnSelectionChangedCallback)
-    self.menu:SetOnClearCallback(function() self:StopInteraction() end)
+    ---self.menu:SetOnClearCallback(function() self:StopInteraction() end)
 
     self.menu.presetLabel = self.menuControl:GetNamedChild("PresetName")
     self.menu.trackQuickslot = self.menuControl:GetNamedChild("TrackQuickslot")

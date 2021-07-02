@@ -58,6 +58,7 @@ local strings = {
     ESOPIE_SI_SETTINGS_GENERALMENU_NAME         = "General Options",
     ESOPIE_SI_SETTINGS_CONFIGUREHEADER_NAME     = "Configure Rings and Slots",
 
+    ESOPIE_SI_SETTINGS_BINDINGSHEADER           = "Ring Bindings",
     ESOPIE_SI_SETTINGS_RINGBINDING1             = "Ring Binding 1",
     ESOPIE_SI_SETTINGS_RINGBINDING2             = "Ring Binding 2",
     ESOPIE_SI_SETTINGS_RINGBINDING3             = "Ring Binding 3",
@@ -65,6 +66,11 @@ local strings = {
     ESOPIE_SI_SETTINGS_RINGBINDING5             = "Ring Binding 5",
     ESOPIE_SI_SETTINGS_RINGBINDING6             = "Ring Binding 6",
     ESOPIE_SI_SETTINGS_BINDINGDISABLED          = "Disabled",
+    ESOPIE_SI_SETTINGS_CONTROLSHEADER           = "Controls",
+    ESOPIE_SI_SETTINGS_KEYBOARDINTERACTMODE     = "Keyboard Interaction Mode",
+    ESOPIE_SI_SETTINGS_GAMEPADINTERACTMODE      = "Gamepad Interaction Mode",
+    ESOPIE_SI_SETTINGS_INTERACTMODEHOLD         = "Hold",
+    ESOPIE_SI_SETTINGS_INTERACTMODETOGGLE       = "Toggle",
 
     ESOPIE_SI_SETTINGS_NEWRING                  = "New Ring",
     ESOPIE_SI_SETTINGS_NEWRING_TT               = "Add a new ring.\nNote: You will need to either set a binding or create a sub-ring slot to access the new ring.",

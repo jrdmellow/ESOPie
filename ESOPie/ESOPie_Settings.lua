@@ -658,6 +658,10 @@ function ESOPie:InitializeSettings()
             name = L(ESOPIE_SI_SETTINGS_GENERALMENU_NAME),
             controls = {
                 {
+                    type = "header",
+                    name = L(ESOPIE_SI_SETTINGS_BINDINGSHEADER),
+                },
+                {
                     type = "dropdown",
                     reference = "ESOPIE_General_RingBinding1",
                     name = L("ESOPIE_SI_SETTINGS_RINGBINDING", 1),
@@ -740,6 +744,28 @@ function ESOPie:InitializeSettings()
                     setFunc = function(value)
                         ESOPie.db.rootRings[6] = value
                     end,
+                },
+                {
+                    type = "header",
+                    name = L(ESOPIE_SI_SETTINGS_CONTROLSHEADER),
+                },
+                {
+                    type = "dropdown",
+                    name = L(ESOPIE_SI_SETTINGS_KEYBOARDINTERACTMODE),
+                    scrollable = true,
+                    choices = { L(ESOPIE_SI_SETTINGS_INTERACTMODEHOLD), L(ESOPIE_SI_SETTINGS_INTERACTMODETOGGLE)  },
+                    choicesValues = { ESOPie.InteractMode.Hold, ESOPie.InteractMode.Toggle },
+                    getFunc = function() return ESOPie.db.controlOptions["keyboard"].bindingInteractMode end,
+                    setFunc = function(value) ESOPie.db.controlOptions["keyboard"].bindingInteractMode = value end,
+                },
+                {
+                    type = "dropdown",
+                    name = L(ESOPIE_SI_SETTINGS_GAMEPADINTERACTMODE),
+                    scrollable = true,
+                    choices = { L(ESOPIE_SI_SETTINGS_INTERACTMODEHOLD), L(ESOPIE_SI_SETTINGS_INTERACTMODETOGGLE)  },
+                    choicesValues = { ESOPie.InteractMode.Hold, ESOPie.InteractMode.Toggle },
+                    getFunc = function() return ESOPie.db.controlOptions["gamepad"].bindingInteractMode end,
+                    setFunc = function(value) ESOPie.db.controlOptions["gamepad"].bindingInteractMode = value end,
                 },
             },
         },

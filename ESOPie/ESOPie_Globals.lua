@@ -89,8 +89,13 @@ ESOPIE_ICON_SLOT_EMPTY = "/EsoUI/Art/Quickslots/quickslot_emptySlot.dds"
 ESOPIE_ICON_SLOT_CANCEL = "/EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds"
 
 local function ESOPie_DevLog(level, fmt, ...)
-    if ESOPie.logger and ESOPie.logger.Log then
-        if type(ESOPie.logger.Log) == "function" then
+    if ESOPie.logger and ESOPie.logger.Log and type(ESOPie.logger.Log) == "function" then
+        ESOPie.logger:Log(level, fmt, ...)
+    end
+end
+local function ESOPie_DevLogC(channel, level, fmt, ...)
+    if ESOPie.logger and ESOPie.logger.Log and type(ESOPie.logger.Log) == "function" then
+        if ESOPie.dev and ESOPie.dev[channel] then
             ESOPie.logger:Log(level, fmt, ...)
         end
     end
@@ -118,7 +123,7 @@ if LibDebugLogger then
 end
 
 ESOPie.DevLog = ESOPie_DevLog
-ESOPie.LogVerboseCond = function(condName, fmt, ...) if ESOPie.dev and ESOPie.dev[condName] then ESOPie_DevLog(LOG_LEVEL_VEROSE, fmt, ...) end end
+ESOPie.LogVerboseC = function(channel, fmt, ...) ESOPie_DevLogC(channel, LOG_LEVEL_VERBOSE, fmt, ...) end
 ESOPie.LogVerbose = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_VERBOSE, fmt, ...) end
 ESOPie.LogDebug = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_DEBUG, fmt, ...) end
 ESOPie.LogInfo = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_INFO, fmt, ...) end

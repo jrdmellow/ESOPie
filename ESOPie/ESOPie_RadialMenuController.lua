@@ -29,10 +29,14 @@ function ESOPie_RadialMenuController:Initialize(control, entryTemplate, animatio
         self:OnSelectionChangedCallback(selectedEntry)
     end
 
+    local function OnClear()
+        self.currentSelectedEntry = nil
+    end
+
     control:SetHandler("OnUpdate", function() self:OnUpdate() end)
     self.menu:SetCustomControlSetUpFunction(SetupEntryControl)
     self.menu:SetOnSelectionChangedCallback(OnSelectionChangedCallback)
-    ---self.menu:SetOnClearCallback(function() self:StopInteraction() end)
+    self.menu:SetOnClearCallback(OnClear)
     self.currentSelectedEntry = nil
 end
 
@@ -119,6 +123,7 @@ function ESOPie_RadialMenuController:PrepareForInteraction()
                 self:NavigateCurrentSelection()
             end
         elseif button == MOUSE_BUTTON_INDEX_RIGHT then
+            self.currentSelectedEntry = nil
             self:CancelSelection()
         end
     end)
@@ -156,19 +161,19 @@ end
 
 function ESOPie_RadialMenuController:ActivateCurrentSelection()
     if not self.onSlotActivateCallback then d("OnSlotActivate callback not set") return end
-    self.onSlotActivateCallback(self.currentSelectedEntry)
+    if self.currentSelectedEntry then
+        self.onSlotActivateCallback(self.currentSelectedEntry)
+    end
 end
 
 function ESOPie_RadialMenuController:NavigateCurrentSelection()
     if not self.onSlotNavigateCallback then d("OnSlotNavigate callback not set") return end
     self.onSlotNavigateCallback(self.currentSelectedEntry)
-    self.currentSelectedEntry = nil
 end
 
 function ESOPie_RadialMenuController:CancelSelection()
     if self.onCancelCallback then self.onCancelCallback() end
     self:StopInteraction()
-    self.currentSelectedEntry = nil
 end
 
 function ESOPie_RadialMenuController:AddSlot(name, inactiveIcon, activeIcon, uniqueid)

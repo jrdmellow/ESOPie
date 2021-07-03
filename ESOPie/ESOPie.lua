@@ -19,7 +19,7 @@ local ESOPIE_INACCESSIBLE_SLASH_COMMANDS = {
     "/dezone", "/frzone", "/enzone", "/jpzone", "/ruzone",
 }
 
-local LogVerboseCond = ESOPie.LogVerboseCond
+local LogVerboseC = ESOPie.LogVerboseC
 local LogVerbose = ESOPie.LogVerbose
 local LogDebug = ESOPie.LogDebug
 local LogInfo = ESOPie.LogInfo
@@ -32,7 +32,7 @@ local Notify = ESOPie.Notify
 
 function ESOPie:ExecuteChatCommand(entry, commandStr)
     assert(entry)
-    LogVerboseCond("debugExecution", "ExecuteChatCommand(%s): %s", entry.name or "nil", commandStr or "nil")
+    LogVerboseC("debugExecution", "ExecuteChatCommand(%s): %s", entry.name or "nil", commandStr or "nil")
     if not commandStr then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_NOCOMMAND), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
     if not commandStr:find("/") == 1 then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_INVALIDFIRSTCHAR), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
     local command = nil
@@ -55,7 +55,7 @@ end
 
 function ESOPie:ExecuteCustomCommand(entry, luaCode)
     assert(entry)
-    LogVerboseCond("debugExecution", "ExecuteCustomCommand(%s): %s", entry.name or "nil", luaCode or "nil")
+    LogVerboseC("debugExecution", "ExecuteCustomCommand(%s): %s", entry.name or "nil", luaCode or "nil")
     if not luaCode then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_LUA_NOCODE), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
     local f = assert(zo_loadstring(luaCode))
     f()
@@ -63,7 +63,7 @@ end
 
 function ESOPie:ExecuteEmote(entry, itemId)
     assert(entry and itemId)
-    LogVerboseCond("debugExecution", "ExecuteEmote(%s): %d", entry.name or "nil", itemId or "nil")
+    LogVerboseC("debugExecution", "ExecuteEmote(%s): %d", entry.name or "nil", itemId or "nil")
     if not itemId or type(itemId) ~= "number" then LogWarning("Emote payload is invalid.") return end
     local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(itemId)
     if emoteInfo then
@@ -73,7 +73,7 @@ end
 
 function ESOPie:ExecuteUseCollectible(entry, itemId)
     assert(entry)
-    LogVerboseCond("debugExecution", "ExecuteUseCollectible(%s): %d", entry.name or "nil", itemId or "nil")
+    LogVerboseC("debugExecution", "ExecuteUseCollectible(%s): %d", entry.name or "nil", itemId or "nil")
     if not itemId or type(itemId) ~= "number" then LogWarning("Collectible payload is invalid.") return end
     if IsCollectibleUnlocked(itemId) then
         UseCollectible(itemId, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
@@ -84,7 +84,7 @@ end
 
 function ESOPie:ExecuteGoToHome(entry, data)
     assert(entry)
-    LogVerboseCond("debugExecution", "ExecuteUseCollectible(%s): %s", entry.name or "nil", data or "nil")
+    LogVerboseC("debugExecution", "ExecuteUseCollectible(%s): %s", entry.name or "nil", data or "nil")
     if not CanLeaveCurrentLocationViaTeleport() then
         Notify(L(ESOPIE_SI_FASTTRAVELUNAVAILABLE))
         return
@@ -237,7 +237,7 @@ function ESOPie:ExecuteSlotAction(selectedEntry)
 end
 
 function ESOPie:OnSlotActivate(selectedEntry)
-    LogVerboseCond("debugCallbacks", "OnSlotActivate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
+    LogVerboseC("debugCallbacks", "OnSlotActivate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
     local interactMode = self:GetActiveControlSettings().bindingInteractMode
     if interactMode == ESOPie.InteractMode.Hold then
         self:ExecuteSlotAction(selectedEntry)
@@ -245,7 +245,7 @@ function ESOPie:OnSlotActivate(selectedEntry)
 end
 
 function ESOPie:OnSlotNavigate(selectedEntry)
-    LogVerboseCond("debugCallbacks", "OnSlotNavigate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
+    LogVerboseC("debugCallbacks", "OnSlotNavigate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
     local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for navigate") return end
     if slotInfo.action == ESOPie.Action.Submenu then
@@ -335,7 +335,7 @@ end
 -- Binding Callbacks
 
 function ESOPie:OnRingBindingPress(ringIndex)
-    LogVerboseCond("debugCallbacks", "OnRingBindingPress(%d)", ringIndex)
+    LogVerboseC("debugCallbacks", "OnRingBindingPress(%d)", ringIndex)
     local interactMode = self:GetActiveControlSettings().bindingInteractMode
     if interactMode == self.InteractMode.Hold then
         self:BeginInteractHold(ringIndex)
@@ -345,7 +345,7 @@ function ESOPie:OnRingBindingPress(ringIndex)
 end
 
 function ESOPie:OnRingBindingRelease(ringIndex)
-    LogVerboseCond("debugCallbacks", "OnRingBindingRelease(%d)", ringIndex)
+    LogVerboseC("debugCallbacks", "OnRingBindingRelease(%d)", ringIndex)
     local interactMode = self:GetActiveControlSettings().bindingInteractMode
     if interactMode == self.InteractMode.Hold then
         self:EndInteractHold(ringIndex)
@@ -353,12 +353,12 @@ function ESOPie:OnRingBindingRelease(ringIndex)
 end
 
 function ESOPie:OnNavigateInteraction()
-    LogVerboseCond("debugCallbacks", "OnNavigateInteraction")
+    LogVerboseC("debugCallbacks", "OnNavigateInteraction")
     self:OnSlotNavigate(self.pieRoot.currentSelectedEntry)
 end
 
 function ESOPie:OnCancelInteraction()
-    LogVerboseCond("debugCallbacks", "OnNavigateInteraction")
+    LogVerboseC("debugCallbacks", "OnNavigateInteraction")
     self.pieRoot:CancelSelection()
 end
 

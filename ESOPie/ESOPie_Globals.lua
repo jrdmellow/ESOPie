@@ -151,6 +151,21 @@ ESOPie.utils.FindEntryByID = function(id, haystack, ensureType)
     return nil
 end
 
+ESOPie.utils.FindEntryOwner = function(id, haystack, ensureType)
+    if id and haystack then
+        for _, entry in pairs(haystack) do
+            if (ensureType == nil or entry.type == ensureType) and entry.slots and type(entry.slots) == "table" then
+                for _, slotId in pairs(entry.slots) do
+                    if slotId == id then
+                        return entry
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
+
 ESOPie.utils.FindEntryIndexByID = function(id, haystack, ensureType)
     if id and haystack then
         for i, entry in pairs(haystack) do

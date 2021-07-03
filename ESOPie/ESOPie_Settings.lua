@@ -229,14 +229,17 @@ local function RemoveSlot(uniqueid)
     end
 end
 
-local function CreateNewSlot()
-    if ESOPie.utils.EntryIsRing(ui.currentEditing) then
+local function CreateNewSlot(entryToAdd)
+    assert(entryToAdd)
+    if ESOPie.utils.EntryIsRing(entryToAdd) then
         local newSlotInfo = {}
         ZO_DeepTableCopy(ESOPIE_DEFAULT_SLOTINFO, newSlotInfo)
         newSlotInfo.uniqueid = GetNextID()
         table.insert(ESOPie.db.entries, newSlotInfo)
-        table.insert(ui.currentEditing.slots, newSlotInfo.uniqueid)
+        table.insert(entryToAdd.slots, newSlotInfo.uniqueid)
         return newSlotInfo
+    else
+        LogError("Cannot add slot to an entry that is not a ring.")
     end
     return nil
 end
@@ -563,10 +566,15 @@ function ESOPie:InitializeSettings()
     local function OnConfirmRemoveEntry()
         if ESOPie.utils.EntryIsRing(ui.currentEditing) then
             RemoveRing(ui.currentEditing.uniqueid)
+            ui.currentEditing = nil
         elseif ESOPie.utils.EntryIsSlot(ui.currentEditing) then
+            local owner = ESOPie.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
             RemoveSlot(ui.currentEditing.uniqueid)
+            ui.currentEditing = owner
         end
-        ui.currentEditing = ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
+        if not ui.currentEditing then
+            ui.currentEditing = ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
+        end
         RebuildRingDropdowns()
         LAM.util.RequestRefreshIfNeeded(ESOPie.LAMPanel)
     end
@@ -819,12 +827,21 @@ function ESOPie:InitializeSettings()
             name = L(ESOPIE_SI_SETTINGS_NEWSLOT),
             tooltip = ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_NEWSLOT_TT), ESOPie.maxVisibleSlots),
             width = "half",
-            disabled = function() return not ESOPie.utils.EntryIsRing(ui.currentEditing) or #ui.currentEditing.slots >= ESOPie.maxVisibleSlots end,
+            disabled = function() return not ui.currentEditing end,
             func = function()
-                CreateNewSlot()
-                RebuildRingDropdowns()
-                UpdateCollectionsCache()
-                RebuildCollectionsDropdowns()
+                local ringToAddSlot = nil
+                if self.utils.EntryIsRing(ui.currentEditing) then
+                    ringToAddSlot = ui.currentEditing
+                else
+                    ringToAddSlot = self.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+                end
+                if ringToAddSlot then
+                    local newSlot = CreateNewSlot(ringToAddSlot)
+                    ui.currentEditing = newSlot
+                    RebuildRingDropdowns()
+                    UpdateCollectionsCache()
+                    RebuildCollectionsDropdowns()
+                end
             end,
         },
         {

@@ -33,11 +33,6 @@ function ESOPie_RadialMenuController:Initialize(control, entryTemplate, animatio
     self.menu:SetCustomControlSetUpFunction(SetupEntryControl)
     self.menu:SetOnSelectionChangedCallback(OnSelectionChangedCallback)
     ---self.menu:SetOnClearCallback(function() self:StopInteraction() end)
-
-    self.menu.presetLabel = self.menuControl:GetNamedChild("PresetName")
-    self.menu.trackQuickslot = self.menuControl:GetNamedChild("TrackQuickslot")
-    self.menu.trackGamepad = self.menuControl:GetNamedChild("TrackGamepad")
-
     self.currentSelectedEntry = nil
 end
 
@@ -69,18 +64,13 @@ end
 function ESOPie_RadialMenuController:StopInteraction()
     local wasShowingRadial = self.beginHold == nil
     self.beginHold = nil
-
     if self.isInteracting then
         self.isInteracting = false
-
         EVENT_MANAGER:UnregisterForEvent("ESOPie", EVENT_GLOBAL_MOUSE_UP)
-
         LockCameraRotation(false)
         RETICLE:RequestHidden(false)
-
         self.menu:SelectCurrentEntry()
     end
-
     return wasShowingRadial
 end
 
@@ -91,7 +81,6 @@ function ESOPie_RadialMenuController:OnUpdate()
             self:ShowMenu()
         end
     end
-
     if self.isInteracting and IsInteracting() and GetInteractionType() ~= INTERACTION_HIDEYHOLE then
         self:StopInteraction()
     end
@@ -105,14 +94,12 @@ function ESOPie_RadialMenuController:ShowMenu()
         d("OnPopulateSlots callback not set")
     end
     self.menu:Show()
-
     if IsInGamepadPreferredMode() then
         self.menuControl.selectedLabel:SetFont("ZoFontGamepad54")
     else
         self.menuControl.selectedLabel:SetFont("ZoInteractionPrompt")
     end
     self.menuControl.selectedLabel:SetText("")
-
     self.isInteracting = true
     LockCameraRotation(true)
     RETICLE:RequestHidden(true)
@@ -170,7 +157,6 @@ end
 function ESOPie_RadialMenuController:ActivateCurrentSelection()
     if not self.onSlotActivateCallback then d("OnSlotActivate callback not set") return end
     self.onSlotActivateCallback(self.currentSelectedEntry)
-    self.currentSelectedEntry = nil
 end
 
 function ESOPie_RadialMenuController:NavigateCurrentSelection()
@@ -189,7 +175,6 @@ function ESOPie_RadialMenuController:AddSlot(name, inactiveIcon, activeIcon, uni
     self.menu:AddEntry(name, inactiveIcon, activeIcon, function() self:ActivateCurrentSelection() end, {name=name, uniqueid=uniqueid})
 end
 
-
 -------------------------------------------------------------------------------
 -- Templates
 
@@ -198,7 +183,5 @@ function ESOPieUI_PieMenuInitialize(self)
 end
 
 function ESOPieUI_EntryTemplateInitialize(self)
-    self.frame = self:GetNamedChild("Frame")
-    self.status = self:GetNamedChild("StatusText")
     ZO_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 end

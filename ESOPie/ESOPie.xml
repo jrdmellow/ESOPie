@@ -21,11 +21,6 @@
                     <Anchor point="CENTER" />
                 </Texture>
 
-                <Texture name="$(parent)TrackGamepad" textureFile="EsoUI/Art/HUD/Gamepad/gp_radialMenu_track.dds" alpha="0" hidden="false">
-                    <Dimensions x="700" y="700" />
-                    <Anchor point="CENTER" />
-                </Texture>
-
                 <Label name="$(parent)SelectedLabel" tier="HIGH" font="ZoFontChat" horizontalAlignment="CENTER" inheritScale="false">
                     <Anchor point="CENTER" />
                 </Label>
@@ -41,9 +36,6 @@
                     <Anchor point="TOPLEFT" relativeTo="$(parent)Icon" offsetX="-8" offsetY="-8" />
                     <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)Icon" offsetX="8" offsetY="8" />
                 </Backdrop>
-                <Label name="$(parent)StatusText" tier="HIGH" font="ZoFontGameShadow" horizontalAlignment="RIGHT" verticalAlignment="TOP" inheritScale="false">
-                    <Anchor point="TOPRIGHT" relativeTo="$(parent)Icon" relativePoint="TOPLEFT" offsetX="4" offsetY="-8"/>
-                </Label>
                 <Label name="$(parent)CountText" tier="HIGH" font="ZoFontGameShadow" inheritScale="false">
                     <Anchor point="BOTTOMRIGHT" offsetX="-4"/>
                 </Label>

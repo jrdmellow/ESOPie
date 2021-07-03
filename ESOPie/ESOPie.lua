@@ -1,99 +1,12 @@
+if not ESOPie then
+    d("ESOPie not initialized properly!")
+    return
+end
+
 local L = GetString
-
-ESOPie = ESOPie or {}
-ESOPie.name = "ESOPie"
-ESOPie.version = "0.2.2 BETA"
-ESOPie.author = "FiveStar"
-ESOPie.url = "https://github.com/jrdmellow/ESOPie/wiki"
-ESOPie.slashCommand = "/esopie"
-ESOPie.settingsPanelName = "ESOPieSettingsPanel"
-ESOPie.prefix = string.format("[%s]: ", ESOPie.name)
-ESOPie.savedVars = "ESOPieSavedVars"
-ESOPie.savedVarsVersion = 4
-ESOPie.logger = nil
-ESOPie.actionLayerName = "ESOPieInteractionLayer"
-ESOPie.radialAnimation = nil --"DefaultRadialMenuAnimation" -- Disabled the animation to keep it snappy.
-ESOPie.entryAnimation = "SelectableItemRadialMenuEntryAnimation"
-ESOPie.EntryType = {
-    Ring = 1,
-    Slot = 2,
-}
-ESOPie.InteractMode = {
-    Hold = 1,
-    Toggle = 2,
-}
-ESOPie.CollectionType = {
-    Allies = 1,
-    Momento = 2,
-    VanityPet = 3,
-    Mount = 4,
-    Emote = 5,
-}
-ESOPie.Action = {
-    Noop = 1,
-    Submenu = 2,
-    ChatExec = 3,
-    CodeExec = 4,
-    GoToHome = 5,
-    PlayEmote = 6,
-    PlayMomento = 7,
-    SummonAlly = 8,
-    SetMount = 9,
-    SetVanityPet = 10,
-    SetCostume = 11,
-    SetPolymorph = 12,
-}
-ESOPie.actionNames = {
-    [ESOPie.Action.Noop]                = L(ESOPIE_SI_ACTION_NOOP),
-    [ESOPie.Action.Submenu]             = L(ESOPIE_SI_ACTION_SUBRING),
-    [ESOPie.Action.ChatExec]            = L(ESOPIE_SI_ACTION_CHATEXEC),
-    [ESOPie.Action.CodeExec]            = L(ESOPIE_SI_ACTION_CODEEXEC),
-    [ESOPie.Action.GoToHome]            = L(ESOPIE_SI_ACTION_GOTOHOME),
-    [ESOPie.Action.PlayEmote]           = L(ESOPIE_SI_ACTION_PLAYEMOTE),
-    [ESOPie.Action.PlayMomento]         = L(ESOPIE_SI_ACTION_PLAYMOMENTO),
-    [ESOPie.Action.SummonAlly]          = L(ESOPIE_SI_ACTION_SUMMONALLY),
-    [ESOPie.Action.SetMount]            = L(ESOPIE_SI_ACTION_SETMOUNT),
-    [ESOPie.Action.SetVanityPet]        = L(ESOPIE_SI_ACTION_SETNCPET),
-    [ESOPie.Action.SetCostume]          = L(ESOPIE_SI_ACTION_SETCOSTUME),
-    [ESOPie.Action.SetPolymorph]        = L(ESOPIE_SI_ACTION_SETPOLYMORPH),
-}
--- Temporary: Limit visible actions and sort
-ESOPie.supportedActions = {
-    ESOPie.Action.Noop,
-    ESOPie.Action.Submenu,
-    ESOPie.Action.PlayEmote,
-    ESOPie.Action.PlayMomento,
-    ESOPie.Action.SummonAlly,
-    ESOPie.Action.SetMount,
-    ESOPie.Action.SetVanityPet,
-    ESOPie.Action.SetCostume,
-    ESOPie.Action.SetPolymorph,
-    ESOPie.Action.GoToHome,
-    ESOPie.Action.ChatExec,
-    ESOPie.Action.CodeExec,
-}
-ESOPie.showCancelButton = false
-ESOPie.maxRingBindings = 6
-ESOPie.maxVisibleSlots = 12
-ESOPie.openRingDelay = 50
-ESOPie.displayedRing = nil
-ESOPie.selectedSlotInfo = nil
-ESOPie.activeBindingIndex = nil
-ESOPie.executionCallbacks = {}
-
-local LOG_LEVEL_VERBOSE = "V"
-local LOG_LEVEL_DEBUG = "D"
-local LOG_LEVEL_INFO = "I"
-local LOG_LEVEL_WARN = "W"
-local LOG_LEVEL_ERROR = "E"
-
-if LibDebugLogger then
-    ESOPie.logger = LibDebugLogger.Create(ESOPie.name)
-    LOG_LEVEL_VERBOSE = LibDebugLogger.LOG_LEVEL_VERBOSE
-    LOG_LEVEL_DEBUG = LibDebugLogger.LOG_LEVEL_DEBUG
-    LOG_LEVEL_INFO = LibDebugLogger.LOG_LEVEL_INFO
-    LOG_LEVEL_WARN = LibDebugLogger.LOG_LEVEL_WARNING
-    LOG_LEVEL_ERROR = LibDebugLogger.LOG_LEVEL_ERROR
+local GetValueSafe = function(table, sub, default)
+    if table and table[sub] then return table[sub] end
+    return default
 end
 
 -- TODO: figure out a way to support these
@@ -106,31 +19,7 @@ local ESOPIE_INACCESSIBLE_SLASH_COMMANDS = {
     "/dezone", "/frzone", "/enzone", "/jpzone", "/ruzone",
 }
 
-ESOPIE_ICON_SLOT_DEFAULT = ESOPIE_ICON_LIBRARY_DEFAULT or "/EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
-ESOPIE_ICON_SLOT_EMPTY = "/EsoUI/Art/Quickslots/quickslot_emptySlot.dds"
-ESOPIE_ICON_SLOT_CANCEL = "/EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds"
-
-local function ESOPie_DevLog(level, fmt, ...)
-    if ESOPie.logger and ESOPie.logger.Log then
-        if type(ESOPie.logger.Log) == "function" then
-            ESOPie.logger:Log(level, fmt, ...)
-        end
-    end
-end
-
-function ESOPie_Notify(fmt, ...)
-    local str = string.format(fmt, ...)
-    CHAT_SYSTEM:AddMessage(str)
-end
-
-ESOPie.DevLog = ESOPie_DevLog
-ESOPie.LogVerbose = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_VERBOSE, fmt, ...) end
-ESOPie.LogDebug = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_DEBUG, fmt, ...) end
-ESOPie.LogInfo = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_INFO, fmt, ...) end
-ESOPie.LogWarning = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_WARN, fmt, ...) end
-ESOPie.LogError = function(fmt, ...) ESOPie_DevLog(LOG_LEVEL_ERROR, fmt, ...) end
-ESOPie.Notify = ESOPie_Notify
-
+local LogVerboseCond = ESOPie.LogVerboseCond
 local LogVerbose = ESOPie.LogVerbose
 local LogDebug = ESOPie.LogDebug
 local LogInfo = ESOPie.LogInfo
@@ -143,6 +32,7 @@ local Notify = ESOPie.Notify
 
 function ESOPie:ExecuteChatCommand(entry, commandStr)
     assert(entry)
+    LogVerboseCond("debugExecution", "ExecuteChatCommand(%s): %s", entry.name or "nil", commandStr or "nil")
     if not commandStr then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_NOCOMMAND), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
     if not commandStr:find("/") == 1 then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_INVALIDFIRSTCHAR), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
     local command = nil
@@ -160,11 +50,12 @@ function ESOPie:ExecuteChatCommand(entry, commandStr)
             return
         end
     end
-    SLASH_COMMANDS[command](args) -- Hacky. Better way?
+    SLASH_COMMANDS[command](args) -- TODO: Hacky. Better way?
 end
 
 function ESOPie:ExecuteCustomCommand(entry, luaCode)
     assert(entry)
+    LogVerboseCond("debugExecution", "ExecuteCustomCommand(%s): %s", entry.name or "nil", luaCode or "nil")
     if not luaCode then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_LUA_NOCODE), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
     local f = assert(zo_loadstring(luaCode))
     f()
@@ -172,6 +63,7 @@ end
 
 function ESOPie:ExecuteEmote(entry, itemId)
     assert(entry and itemId)
+    LogVerboseCond("debugExecution", "ExecuteEmote(%s): %d", entry.name or "nil", itemId or "nil")
     if not itemId or type(itemId) ~= "number" then LogWarning("Emote payload is invalid.") return end
     local emoteInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(itemId)
     if emoteInfo then
@@ -180,7 +72,8 @@ function ESOPie:ExecuteEmote(entry, itemId)
 end
 
 function ESOPie:ExecuteUseCollectible(entry, itemId)
-    assert(entry and itemId)
+    assert(entry)
+    LogVerboseCond("debugExecution", "ExecuteUseCollectible(%s): %d", entry.name or "nil", itemId or "nil")
     if not itemId or type(itemId) ~= "number" then LogWarning("Collectible payload is invalid.") return end
     if IsCollectibleUnlocked(itemId) then
         UseCollectible(itemId, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
@@ -191,6 +84,7 @@ end
 
 function ESOPie:ExecuteGoToHome(entry, data)
     assert(entry)
+    LogVerboseCond("debugExecution", "ExecuteUseCollectible(%s): %s", entry.name or "nil", data or "nil")
     if not CanLeaveCurrentLocationViaTeleport() then
         Notify(L(ESOPIE_SI_FASTTRAVELUNAVAILABLE))
         return
@@ -334,17 +228,16 @@ end
 function ESOPie:ExecuteSlotAction(selectedEntry)
     local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for activate") return end
-
     local handler = self.executionCallbacks[slotInfo.action]
     if handler then
-        LogVerbose("%s => %s (%s)", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), slotInfo.data or "nil")
         handler(slotInfo, slotInfo.data)
     else
-        LogDebug("Unhandled action %s", self.utils.GetActionTypeString(slotInfo.action))
+        LogWarning("Unhandled action %s", self.utils.GetActionTypeString(slotInfo.action))
     end
 end
 
 function ESOPie:OnSlotActivate(selectedEntry)
+    LogVerboseCond("debugCallbacks", "OnSlotActivate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
     local interactMode = self:GetActiveControlSettings().bindingInteractMode
     if interactMode == ESOPie.InteractMode.Hold then
         self:ExecuteSlotAction(selectedEntry)
@@ -352,15 +245,15 @@ function ESOPie:OnSlotActivate(selectedEntry)
 end
 
 function ESOPie:OnSlotNavigate(selectedEntry)
+    LogVerboseCond("debugCallbacks", "OnSlotNavigate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
     local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
     if not slotInfo then LogWarning("Invalid slot info for navigate") return end
-    LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), slotInfo.data)
     if slotInfo.action == ESOPie.Action.Submenu then
+        LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), tostring(slotInfo.data))
         self.pieRoot.menuControl.selectedLabel:SetText("")
         self.displayedRing = self:GetRing(slotInfo.data)
         if self.displayedRing then
-            -- delay the call slightly
-            zo_callLater(function() ESOPie.pieRoot:ShowMenu() end, self.openRingDelay)
+            ESOPie.pieRoot:ShowMenu()
         else
             self.pieRoot:StopInteraction()
             LogError("Displayed ring not valid")
@@ -377,7 +270,6 @@ end
 function ESOPie:OnPopulateSlots()
     local ring = ESOPie.displayedRing
     if not ring or not ring.slots then LogWarning("Displayed ring not valid.") return end
-
     local maxSlots = ESOPie.maxVisibleSlots
     if ESOPie.showCancelButton then
         maxSlots = maxSlots - 1
@@ -428,13 +320,8 @@ function ESOPie:HideRing(ringIndex)
     end
 end
 
-function ESOPie:BeginInteractHold(ringIndex)
-    self:ShowRing(ringIndex)
-end
-
-function ESOPie:EndInteractHold(ringIndex)
-    self:HideRing(ringIndex)
-end
+function ESOPie:BeginInteractHold(ringIndex) self:ShowRing(ringIndex) end
+function ESOPie:EndInteractHold(ringIndex) self:HideRing(ringIndex) end
 
 function ESOPie:ToggleInteract(ringIndex)
     if self.pieRoot:IsInteracting() then
@@ -448,6 +335,7 @@ end
 -- Binding Callbacks
 
 function ESOPie:OnRingBindingPress(ringIndex)
+    LogVerboseCond("debugCallbacks", "OnRingBindingPress(%d)", ringIndex)
     local interactMode = self:GetActiveControlSettings().bindingInteractMode
     if interactMode == self.InteractMode.Hold then
         self:BeginInteractHold(ringIndex)
@@ -457,6 +345,7 @@ function ESOPie:OnRingBindingPress(ringIndex)
 end
 
 function ESOPie:OnRingBindingRelease(ringIndex)
+    LogVerboseCond("debugCallbacks", "OnRingBindingRelease(%d)", ringIndex)
     local interactMode = self:GetActiveControlSettings().bindingInteractMode
     if interactMode == self.InteractMode.Hold then
         self:EndInteractHold(ringIndex)
@@ -464,10 +353,12 @@ function ESOPie:OnRingBindingRelease(ringIndex)
 end
 
 function ESOPie:OnNavigateInteraction()
+    LogVerboseCond("debugCallbacks", "OnNavigateInteraction")
     self:OnSlotNavigate(self.pieRoot.currentSelectedEntry)
 end
 
 function ESOPie:OnCancelInteraction()
+    LogVerboseCond("debugCallbacks", "OnNavigateInteraction")
     self.pieRoot:CancelSelection()
 end
 

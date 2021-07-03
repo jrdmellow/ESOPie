@@ -1,14 +1,5 @@
 if not ESOPie then d("[ESOPIE] ERROR: ESOPie not initialized.") return end
 
--- ZO_NORMAL_TEXT
--- ZO_SELECTED_TEXT
--- ZO_CONTRAST_TEXT
--- ZO_SECOND_CONTRAST_TEXT
--- ZO_HIGHLIGHT_TEXT
--- ZO_HINT_TEXT
--- ZO_SUCCEEDED_TEXT
-
-
 local L = GetString
 local LAM = LibAddonMenu2
 
@@ -647,7 +638,6 @@ function ESOPie:InitializeSettings()
     ui.currentEditing = ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
 
     local optionsTable = {
-        -- TODO: Localize
         {
             type = "description",
             text = "",
@@ -1087,3 +1077,11 @@ function ESOPie:InitializeSettings()
     CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", OnPanelOpened)
     --CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", MyLAMPanelClosed)
 end
+
+-- ZO_NORMAL_TEXT
+-- ZO_SELECTED_TEXT
+-- ZO_CONTRAST_TEXT
+-- ZO_SECOND_CONTRAST_TEXT
+-- ZO_HIGHLIGHT_TEXT
+-- ZO_HINT_TEXT
+-- ZO_SUCCEEDED_TEXT

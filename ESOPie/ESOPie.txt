@@ -1,7 +1,7 @@
 ## APIVersion: 100035
 ## Title: ESOPie
-## Version 0.2.2 BETA
-## AddOnVersion: 03
+## Version 0.2.3 BETA
+## AddOnVersion: 04
 ## IsLibrary: false
 ## Dependson LibAddonMenu-2.0>=32 LibDialog
 ## OptionalDependsOn: LibDebugLogger
@@ -18,7 +18,7 @@
 lang/en.lua
 lang/$(language).lua
 ESOPie_IconLibrary.lua
-ESOPie_Utils.lua
+ESOPie_Globals.lua
 ESOPie_RadialMenuController.lua
 ESOPie.lua
 ESOPie_Settings.lua

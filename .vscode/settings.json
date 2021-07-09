@@ -1,0 +1,6 @@
+{
+    "Lua.workspace.ignoreDir": [
+        ".vscode",
+        "ESOPie_IconLibrary.lua"
+    ]
+}

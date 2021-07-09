@@ -471,12 +471,12 @@ local function RebuildRingDropdowns()
     for _, ringId in pairs(ui.bindingRingValues) do
         local ring = ESOPie.utils.FindEntryByID(ringId, ESOPie.db.entries, ESOPie.EntryType.Ring)
         if ring then
-            table.insert(ui.configurationChoices, ZO_CachedStrFormat("|cffffff<<1>>|r", ring.name))
+            table.insert(ui.configurationChoices, ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_DROPDOWNRING), ZO_SECOND_CONTRAST_TEXT:Colorize(ring.name)))
             table.insert(ui.configurationValues, ring.uniqueid)
             for _, slotId in pairs(ring.slots) do
                 local slot = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
                 if slot then
-                    table.insert(ui.configurationChoices, ZO_CachedStrFormat("-> |c777777<<1>>|r", slot.name))
+                    table.insert(ui.configurationChoices, ZO_CachedStrFormat("-> <<1>>", ZO_DISABLED_TEXT:Colorize(slot.name)))
                     table.insert(ui.configurationValues, slot.uniqueid)
                 end
             end

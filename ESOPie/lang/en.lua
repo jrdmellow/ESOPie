@@ -1,6 +1,6 @@
 local strings = {
     -- Binding Menu
-    SI_ESOPIE_TITLE = "ESOPie",
+    SI_ESOPIE_TITLE                             = "|c66bbffESOPie|r Quickslots",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_1          = "Ring 1",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_2          = "Ring 2",
     SI_BINDING_NAME_ESOPIE_OPEN_RING_3          = "Ring 3",
@@ -57,6 +57,7 @@ local strings = {
     ESOPIE_SI_SETTINGS_NOBINDINGSDETECTED       = "|cffff00Warning:|r No ring bindings have been detected. In order to use ESOPie at least one ring binding must be assigned.\nGo to the Controls settings and assign a key or button to at least one ESOPie ring.",
     ESOPIE_SI_SETTINGS_GENERALMENU_NAME         = "General Options",
     ESOPIE_SI_SETTINGS_CONFIGUREHEADER_NAME     = "Configure Rings and Slots",
+    ESOPIE_SI_SETTINGS_DROPDOWNRING             = "Ring: <<1>>",
 
     ESOPIE_SI_SETTINGS_BINDINGSHEADER           = "Ring Bindings",
     ESOPIE_SI_SETTINGS_RINGBINDING1             = "Ring Binding 1",

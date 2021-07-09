@@ -1,7 +1,7 @@
 ## APIVersion: 100035
 ## Title: ESOPie
-## Version 0.2.3 BETA
-## AddOnVersion: 04
+## Version 0.2.4 BETA
+## AddOnVersion: 05
 ## IsLibrary: false
 ## Dependson LibAddonMenu-2.0>=32 LibDialog
 ## OptionalDependsOn: LibDebugLogger

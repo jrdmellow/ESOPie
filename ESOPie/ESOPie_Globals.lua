@@ -40,6 +40,7 @@ ESOPie.Action = {
     SetVanityPet = 10,
     SetCostume = 11,
     SetPolymorph = 12,
+    SetDRSlot = 13,
 }
 ESOPie.actionNames = {
     [ESOPie.Action.Noop]                = L(ESOPIE_SI_ACTION_NOOP),
@@ -54,8 +55,8 @@ ESOPie.actionNames = {
     [ESOPie.Action.SetVanityPet]        = L(ESOPIE_SI_ACTION_SETNCPET),
     [ESOPie.Action.SetCostume]          = L(ESOPIE_SI_ACTION_SETCOSTUME),
     [ESOPie.Action.SetPolymorph]        = L(ESOPIE_SI_ACTION_SETPOLYMORPH),
+    [ESOPie.Action.SetDRSlot]           = L(ESOPIE_SI_ACTION_SETDRSLOT)
 }
--- Temporary: Limit visible actions and sort
 ESOPie.supportedActions = {
     ESOPie.Action.Noop,
     ESOPie.Action.Submenu,
@@ -198,41 +199,47 @@ ESOPie.utils.EntryIsSlot = function(entry)
     return entry.type == ESOPie.EntryType.Slot
 end
 
-ESOPie.utils.IsSubringAction = function(entry)
+ESOPie.utils.IsActionOfType = function(entry, actionType)
+    assert(actionType and type(actionType) == "number")
+    return entry.action == actionType
+end
+
+ESOPie.utils.IsActionAnyOfType = function(entry, actionTypes)
+    assert(actionTypes and type(actionTypes) == "table")
     if not ESOPie.utils.EntryIsSlot(entry) then return false end
-    return entry.action == ESOPie.Action.Submenu
+    for _, v in pairs(actionTypes) do
+        if entry.action == v then return true end
+    end
+    return false
+end
+
+ESOPie.utils.IsSubringAction = function(entry)
+    return ESOPie.utils.IsActionOfType(entry, ESOPie.Action.Submenu)
 end
 
 ESOPie.utils.IsCommandAction = function(entry)
-    if not ESOPie.utils.EntryIsSlot(entry) then return false end
-    return entry.action == ESOPie.Action.ChatExec or entry.action == ESOPie.Action.CodeExec
-end
-
-ESOPie.utils.IsHouseAction = function(entry)
-    if not ESOPie.utils.EntryIsSlot(entry) then return false end
-    return entry.action == ESOPie.Action.GoToHome
+    return ESOPie.utils.IsActionAnyOfType(entry, { ESOPie.Action.ChatExec, ESOPie.Action.CodeExec })
 end
 
 ESOPie.utils.IsCollectableAction = function(entry)
-    if not ESOPie.utils.EntryIsSlot(entry) then return false end
-    if      entry.action == ESOPie.Action.PlayEmote     then return true
-    elseif  entry.action == ESOPie.Action.PlayMomento   then return true
-    elseif  entry.action == ESOPie.Action.SummonAlly    then return true
-    elseif  entry.action == ESOPie.Action.SetMount      then return true
-    elseif  entry.action == ESOPie.Action.SetVanityPet  then return true
-    elseif  entry.action == ESOPie.Action.SetCostume    then return true
-    elseif  entry.action == ESOPie.Action.SetPolymorph  then return true
-    end
+    return ESOPie.utils.IsActionAnyOfType(entry, {
+        ESOPie.Action.PlayEmote,
+        ESOPie.Action.PlayMomento,
+        ESOPie.Action.SummonAlly,
+        ESOPie.Action.SetMount,
+        ESOPie.Action.SetVanityPet,
+        ESOPie.Action.SetCostume,
+        ESOPie.Action.SetPolymorph
+    })
 end
 
 ESOPie.utils.CollectionHasCategory = function(entry)
-    if not ESOPie.utils.EntryIsSlot(entry) then return false end
-    if      entry.action == ESOPie.Action.PlayEmote     then return true
-    elseif  entry.action == ESOPie.Action.SummonAlly    then return true
-    elseif  entry.action == ESOPie.Action.SetMount      then return true
-    elseif  entry.action == ESOPie.Action.SetVanityPet  then return true
-    --elseif  entry.action == ESOPie.Action.SetCostume    then return true
-    --elseif  entry.action == ESOPie.Action.SetPolymorph  then return true
-    end
-    return false
+    return ESOPie.utils.IsActionAnyOfType(entry, {
+        ESOPie.Action.PlayEmote,
+        ESOPie.Action.SummonAlly,
+        ESOPie.Action.SetMount,
+        ESOPie.Action.SetVanityPet,
+        --ESOPie.Action.SetCostume,
+        --ESOPie.Action.SetPolymorphm
+    })
 end

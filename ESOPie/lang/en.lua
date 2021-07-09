@@ -42,6 +42,7 @@ local strings = {
     ESOPIE_SI_ACTION_SETNCPET                   = "Change Non-Combat Pet",
     ESOPIE_SI_ACTION_SETCOSTUME                 = "Change Costume",
     ESOPIE_SI_ACTION_SETPOLYMORPH               = "Change Polymorph",
+    ESOPIE_SI_ACTION_SETDRSLOT                  = "Change Dressing Room Slot",
 
     -- Notifications
     ESOPIE_SI_CHAT_NOCOMMAND                    = "Slot <<1>> has no chat command to execute.",
@@ -113,6 +114,11 @@ local strings = {
     ESOPIE_SI_SETTINGS_COMMANDMENU              = "Command",
     ESOPIE_SI_SETTINGS_COMMAND                  = "Command",
     ESOPIE_SI_SETTINGS_COMMAND_TT               = "Chat command or Lua code to execute when activated.",
+
+    ESOPIE_SI_SETTINGS_EXT_DRMENU               = "Dressing Room",
+    ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT         = "Slot",
+    ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT_TT      = "Dressing Room slot to switch to when activated.",
+    ESOPIE_SI_SETTINGS_EXT_DRSLOT               = "Slot <<1>>",
 
     -- Collection Tooltips
     ESOPIE_SI_TOOLTIP_DOEMOTE                   = "Do the <<1>> emote.",

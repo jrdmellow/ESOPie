@@ -30,7 +30,7 @@ local Notify = ESOPie.Notify
 -------------------------------------------------------------------------------
 -- ESOPie Handler
 
-function ESOPie:ExecuteChatCommand(entry, commandStr)
+local function ExecuteChatCommand(entry, commandStr)
     assert(entry)
     LogVerboseC("debugExecution", "ExecuteChatCommand(%s): %s", entry.name or "nil", commandStr or "nil")
     if not commandStr then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_NOCOMMAND), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
@@ -53,7 +53,7 @@ function ESOPie:ExecuteChatCommand(entry, commandStr)
     SLASH_COMMANDS[command](args) -- TODO: Hacky. Better way?
 end
 
-function ESOPie:ExecuteCustomCommand(entry, luaCode)
+local function ExecuteCustomCommand(entry, luaCode)
     assert(entry)
     LogVerboseC("debugExecution", "ExecuteCustomCommand(%s): %s", entry.name or "nil", luaCode or "nil")
     if not luaCode then Notify(ZO_CachedStrFormat(L(ESOPIE_SI_LUA_NOCODE), ZO_SELECTED_TEXT:Colorize(entry.name))) return end
@@ -61,7 +61,7 @@ function ESOPie:ExecuteCustomCommand(entry, luaCode)
     f()
 end
 
-function ESOPie:ExecuteEmote(entry, itemId)
+local function ExecuteEmote(entry, itemId)
     assert(entry and itemId)
     LogVerboseC("debugExecution", "ExecuteEmote(%s): %d", entry.name or "nil", itemId or "nil")
     if not itemId or type(itemId) ~= "number" then LogWarning("Emote payload is invalid.") return end
@@ -71,7 +71,7 @@ function ESOPie:ExecuteEmote(entry, itemId)
     end
 end
 
-function ESOPie:ExecuteUseCollectible(entry, itemId)
+local function ExecuteUseCollectible(entry, itemId)
     assert(entry)
     LogVerboseC("debugExecution", "ExecuteUseCollectible(%s): %d", entry.name or "nil", itemId or "nil")
     if not itemId or type(itemId) ~= "number" then LogWarning("Collectible payload is invalid.") return end
@@ -82,7 +82,7 @@ function ESOPie:ExecuteUseCollectible(entry, itemId)
     end
 end
 
-function ESOPie:ExecuteGoToHome(entry, data)
+local function ExecuteGoToHome(entry, data)
     assert(entry)
     LogVerboseC("debugExecution", "ExecuteUseCollectible(%s): %s", entry.name or "nil", data or "nil")
     if not CanLeaveCurrentLocationViaTeleport() then
@@ -122,6 +122,16 @@ function ESOPie:ExecuteGoToHome(entry, data)
     end
 end
 
+local function ExecuteDRSlot(entry, data)
+    assert(DressingRoom)
+    LogVerboseC("debugExecution", "ExecuteDRSlot(%s): %d", entry.name or "nil", data or "nil")
+    if not data then LogWarning("Invalid DressingRoom data for slot %s", entry.name) return end
+    DressingRoom:LoadSet(data)
+end
+
+-------------------------------------------------------------------------------
+-- Initialization
+
 function ESOPie:Initialize()
     self:InitializeSettings()
     self.pieRoot = ESOPie_RadialMenuController:New(ESOPie_UI_Root, "ESOPie_EntryTemplate", self.radialAnimation, self.entryAnimation)
@@ -143,18 +153,24 @@ function ESOPie:Initialize()
         self.executionCallbacks[action] = handler
     end
 
-    RegisterHandler(self.Action.Noop, function(entry, data) end) -- Do nothing.
-    RegisterHandler(self.Action.Submenu, function(entry, data) end) -- Do nothing; handled by navigate callback.
-    RegisterHandler(self.Action.ChatExec, function(entry, data) self:ExecuteChatCommand(entry, data) end)
-    RegisterHandler(self.Action.CodeExec, function(entry, data) self:ExecuteCustomCommand(entry, data) end)
-    RegisterHandler(self.Action.GoToHome, function(entry, data) self:ExecuteGoToHome(entry, data) end)
-    RegisterHandler(self.Action.PlayEmote, function(entry, data) self:ExecuteEmote(entry, data) end)
-    RegisterHandler(self.Action.PlayMomento, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
-    RegisterHandler(self.Action.SummonAlly, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
-    RegisterHandler(self.Action.SetMount, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
-    RegisterHandler(self.Action.SetVanityPet, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
-    RegisterHandler(self.Action.SetCostume, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
-    RegisterHandler(self.Action.SetPolymorph, function(entry, data) self:ExecuteUseCollectible(entry, data) end)
+    RegisterHandler(self.Action.Noop,           function(entry, data) end) -- Do nothing.
+    RegisterHandler(self.Action.Submenu,        function(entry, data) end) -- Do nothing; handled by navigate callback.
+    RegisterHandler(self.Action.ChatExec,       ExecuteChatCommand)
+    RegisterHandler(self.Action.CodeExec,       ExecuteCustomCommand)
+    RegisterHandler(self.Action.GoToHome,       ExecuteGoToHome)
+    RegisterHandler(self.Action.PlayEmote,      ExecuteEmote)
+    RegisterHandler(self.Action.PlayMomento,    ExecuteUseCollectible)
+    RegisterHandler(self.Action.SummonAlly,     ExecuteUseCollectible)
+    RegisterHandler(self.Action.SetMount,       ExecuteUseCollectible)
+    RegisterHandler(self.Action.SetVanityPet,   ExecuteUseCollectible)
+    RegisterHandler(self.Action.SetCostume,     ExecuteUseCollectible)
+    RegisterHandler(self.Action.SetPolymorph,   ExecuteUseCollectible)
+
+    ESOPie.Extensions = {}
+    if DressingRoom then
+        table.insert(ESOPie.supportedActions, ESOPie.Action.SetDRSlot)
+        RegisterHandler(self.Action.SetDRSlot, function(entry, data) ExecuteDRSlot(entry, data) end)
+    end
 
     local actionsSize = 0
     for _, action in pairs(self.Action) do
@@ -176,7 +192,7 @@ function ESOPie:ResolveEntryIcon(entry)
         if not entry.icon or entry.icon == "" then
             if self.utils.IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
                 return GetCollectibleIcon(entry.data)
-            elseif self.utils.IsHouseAction(entry) then
+            elseif self.utils.IsActionOfType(entry, ESOPie.Action.GoToHome) then
                 local houseId = nil
                 if entry.data and entry.data.houseId and type(entry.data.houseId) == "number" then
                     houseId = entry.data.houseId

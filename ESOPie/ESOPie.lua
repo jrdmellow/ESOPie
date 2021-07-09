@@ -200,22 +200,10 @@ function ESOPie:GetActiveControlSettings()
     end
 end
 
-function ESOPie:GetRing(id)
-    if self.db and self.db.entries then
-        local ring = self.utils.FindEntryByID(id, self.db.entries, ESOPie.EntryType.Ring)
-        if not ring then
-            LogError("Ring <%d> not found.", id)
-        end
-        return ring
-    else
-        LogWarning("SaveData invalid.")
-    end
-    return nil
-end
-
 function ESOPie:GetRootRing(index)
+    assert(self.db)
     if index <= #self.db.rootRings then
-        return self:GetRing(self.db.rootRings[index])
+        return self.utils.FindEntryByID(self.db.rootRings[index], self.db.entries, self.EntryType.Ring)
     end
     return nil
 end
@@ -251,7 +239,7 @@ function ESOPie:OnSlotNavigate(selectedEntry)
     if slotInfo.action == ESOPie.Action.Submenu then
         LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), tostring(slotInfo.data))
         self.pieRoot.menuControl.selectedLabel:SetText("")
-        self.displayedRing = self:GetRing(slotInfo.data)
+        self.displayedRing = self.utils.FindEntryByID(slotInfo.data, self.db.entries, self.EntryType.Ring)
         if self.displayedRing then
             ESOPie.pieRoot:ShowMenu()
         else
@@ -367,6 +355,7 @@ end
 
 EVENT_MANAGER:RegisterForEvent(ESOPie.name, EVENT_ADD_ON_LOADED, function(event, addonName)
     if addonName == ESOPie.name then
+        EVENT_MANAGER:UnregisterForEvent(ESOPie.name, EVENT_ADD_ON_LOADED)
         ESOPie:Initialize()
     end
 end)

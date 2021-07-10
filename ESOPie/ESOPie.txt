@@ -1,10 +1,10 @@
 ## APIVersion: 100035
 ## Title: ESOPie
-## Version 0.2.4 BETA
-## AddOnVersion: 05
+## Version 0.2.5 BETA
+## AddOnVersion: 06
 ## IsLibrary: false
 ## Dependson LibAddonMenu-2.0>=32 LibDialog
-## OptionalDependsOn: LibDebugLogger
+## OptionalDependsOn: LibDebugLogger, DressingRoom
 ## SavedVariables: ESOPieSavedVars
 ## Author: FiveStar
 ## Description: ESOPie is a radial action-binding addon inspired by the WoW addon OPie by cfxfox

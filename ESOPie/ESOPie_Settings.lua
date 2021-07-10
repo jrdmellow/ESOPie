@@ -484,6 +484,17 @@ local function RebuildRingDropdowns()
     UpdateDropdown("ESOPIE_Configure_Selection", ui.configurationChoices, ui.configurationValues)
 end
 
+local function RebuildExtensionOptions()
+    if DressingRoom and DressingRoom.numSets then
+        local drSlotOptions = { names = {}, values = {} }
+        for i = 1, DressingRoom:numSets() do
+            table.insert(drSlotOptions.names, ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_EXT_DRSLOT), i))
+            table.insert(drSlotOptions.values, i)
+        end
+        UpdateDropdown("ESOPie_DressingRoom_SlotSelect", drSlotOptions.names, drSlotOptions.values)
+    end
+end
+
 local function RebuildAll()
     RebuildRingDropdowns()
     RebuildCollectionsDropdowns()
@@ -626,6 +637,7 @@ function ESOPie:InitializeSettings()
         LogVerbose("OnPanelOpened")
         RefreshBindingWarning()
         RebuildActionsDropdown()
+        RebuildExtensionOptions()
     end
 
     --[[
@@ -837,11 +849,6 @@ function ESOPie:InitializeSettings()
     }
 
     if DressingRoom then
-        local drSlotOptions = { names = {}, values = {} }
-        for i = 1, DressingRoom:numSets() do
-            table.insert(drSlotOptions.names, ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_EXT_DRSLOT), i))
-            table.insert(drSlotOptions.values, i)
-        end
         local dressingRoomSubmenu = {
                 type = "submenu",
                 name = L(ESOPIE_SI_SETTINGS_EXT_DRMENU),
@@ -849,11 +856,12 @@ function ESOPie:InitializeSettings()
                 controls = {
                     {
                         type = "dropdown",
+                        reference = "ESOPie_DressingRoom_SlotSelect",
                         name = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT),
                         tooltip = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT_TT),
                         scrollable = true,
-                        choices = drSlotOptions.names,
-                        choicesValues = drSlotOptions.values,
+                        choices = {},
+                        choicesValues = {},
                         getFunc = function()
                             if ESOPie.utils.IsActionOfType(ui.currentEditing, ESOPie.Action.SetDRSlot) and type(ui.currentEditing.data) == "number" then
                                 return ui.currentEditing.data

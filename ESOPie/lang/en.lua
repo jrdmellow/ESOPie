@@ -48,6 +48,7 @@ local strings = {
     ESOPIE_SI_CHAT_NOCOMMAND                    = "Slot <<1>> has no chat command to execute.",
     ESOPIE_SI_CHAT_INVALIDFIRSTCHAR             = "First character of command for slot <<1>> must be '/'.",
     ESOPIE_SI_CHAT_COMMANDNOTSUPPORTED          = "ESOPie currently does not support this chat command. Hopefully soon!",
+    ESOPIE_SI_CHAT_UNKNOWNCOMMAND               = "Unknown chat command '<<1>>'. Is it spelled correctly?",
     ESOPIE_SI_LUA_NOCODE                        = "Slot <<1>> has no code to execute.",
     ESOPIE_SI_COLLECTIBLE_NOTUNLOCKED           = "<<1>> is not unlocked.",
     ESOPIE_SI_FASTTRAVELUNAVAILABLE             = "Fast travel is not available right now.",

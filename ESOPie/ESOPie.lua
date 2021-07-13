@@ -47,7 +47,17 @@ local function ExecuteChatCommand(entry, commandStr)
             return
         end
     end
-    SLASH_COMMANDS[command](args) -- TODO: Hacky. Better way?
+    -- TODO: Hacky. Better way?
+    local func = SLASH_COMMANDS[command]
+    if func then
+        if args == nil or args == "" then
+            func("") -- some slash commands expect an empty string
+        else
+            func(args)
+        end
+    else
+        Notify(ZO_CachedStrFormat(L(ESOPIE_SI_CHAT_UNKNOWNCOMMAND), command))
+    end
 end
 
 local function ExecuteCustomCommand(entry, luaCode)
@@ -374,7 +384,7 @@ EVENT_MANAGER:RegisterForEvent(ESOPie.name, EVENT_ADD_ON_LOADED, function(event,
 end)
 
 --[[
-SLASH_COMMANDS["/esopie_reset"] = function(args)
+SLASH_COMMANDS["/esopie_reset"] = function()
     ESOPie:ResetToDefault()
 end
 ]]--

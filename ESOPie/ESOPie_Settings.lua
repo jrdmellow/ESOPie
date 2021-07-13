@@ -3,6 +3,8 @@ if not ESOPie then d("[ESOPIE] ERROR: ESOPie not initialized.") return end
 local L = GetString
 local LAM = LibAddonMenu2
 
+if not LAM then d("[ESOPIE] ERROR: LibAddonMenu not found.") return end
+
 local LogVerbose = ESOPie.LogVerbose
 local LogDebug = ESOPie.LogDebug
 local LogInfo = ESOPie.LogInfo
@@ -1130,6 +1132,7 @@ function ESOPie:InitializeSettings()
         -- donation = "",
     }
 
+    ESOPie.LAMPanel = {}
     ESOPie.LAMPanel = LAM:RegisterAddonPanel(ESOPie.settingsPanelName, panelData)
     LAM:RegisterOptionControls(ESOPie.settingsPanelName, optionsTable)
 

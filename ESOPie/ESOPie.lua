@@ -1,7 +1,4 @@
-if not ESOPie then
-    d("ESOPie not initialized properly!")
-    return
-end
+if not ESOPie then d("[ESOPie] ERROR: ESOPie not initialized properly!") return end
 
 local L = GetString
 local GetValueSafe = function(table, sub, default)

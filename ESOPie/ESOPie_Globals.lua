@@ -1,7 +1,7 @@
 local L = GetString
 ESOPie = ESOPie or {}
 ESOPie.name = "ESOPie"
-ESOPie.version = "0.2.5 BETA"
+ESOPie.version = "0.2.6 BETA"
 ESOPie.author = "FiveStar"
 ESOPie.url = "https://github.com/jrdmellow/ESOPie/wiki"
 ESOPie.slashCommand = "/esopie"

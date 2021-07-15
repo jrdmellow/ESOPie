@@ -561,16 +561,16 @@ end
 
 local function RefreshConfigurationHeader()
     if ESOPie.utils.EntryIsRing(ui.currentEditing) then
-        UpdateHeader("ESOPIE_Configure_Header", ZO_CachedStrFormat("!!Ring: <<1>>", ESOPIE_COLOR_RING:Colorize(ui.currentEditing.name)))
+        UpdateHeader("ESOPIE_Configure_Header", ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_CONF_RINGEDITHEADER), ESOPIE_COLOR_RING:Colorize(ui.currentEditing.name)))
     elseif ESOPie.utils.EntryIsSlot(ui.currentEditing) then
         local owner = ESOPie.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
         if owner then
-            UpdateHeader("ESOPIE_Configure_Header", ZO_CachedStrFormat("!!Slot: <<1>> in <<2>>", ESOPIE_COLOR_SLOT:Colorize(ui.currentEditing.name), ESOPIE_COLOR_RING:Colorize(owner.name)))
+            UpdateHeader("ESOPIE_Configure_Header", ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_CONF_SLOTEDITHEADER), ESOPIE_COLOR_SLOT:Colorize(ui.currentEditing.name), ESOPIE_COLOR_RING:Colorize(owner.name)))
         else
-            UpdateHeader("ESOPIE_Configure_Header", "!!Configure Entry")
+            UpdateHeader("ESOPIE_Configure_Header", L(ESOPIE_SI_SETTINGS_CONF_ENTRYEDITHEADER))
         end
     else
-        UpdateHeader("ESOPIE_Configure_Header", "!!Configure Entry")
+        UpdateHeader("ESOPIE_Configure_Header", L(ESOPIE_SI_SETTINGS_CONF_ENTRYEDITHEADER))
     end
 end
 
@@ -737,7 +737,7 @@ function ESOPie:InitializeSettings()
     {
         {
             type = "header",
-            name = "!!Slot Icon",
+            name = L(ESOPIE_SI_SETTINGS_CONF_ICONHEADER),
         },
         {
             type = "iconpicker",
@@ -792,7 +792,7 @@ function ESOPie:InitializeSettings()
         -- TODO: visibility condition
         {
             type = "header",
-            name = "!!Slot Action Configuration",
+            name = L(ESOPIE_SI_SETTINGS_CONF_ACTIONHEADER),
         },
         {
             type = "dropdown",
@@ -968,13 +968,13 @@ function ESOPie:InitializeSettings()
 
     table.insert(subringMenuControls, {
         type = "header",
-        name = "!!Slot Organization",
+        name = L(ESOPIE_SI_SETTINGS_ORG_HEADER),
     })
     table.insert(subringMenuControls, {
         type = "dropdown",
         reference = "ESOPIE_Slot_MoveToRing",
-        name = "!!Move To",
-        tooltip = "!!Select the ring to move this slot to.",
+        name = L(ESOPIE_SI_SETTINGS_ORG_MOVETORING),
+        tooltip = L(ESOPIE_SI_SETTINGS_ORG_MOVETORING_TT),
         scrollable = true,
         choices = ui.allRingChoices,
         choicesValues = ui.allRingChoices,
@@ -992,11 +992,11 @@ function ESOPie:InitializeSettings()
                 if currentOwner and currentOwner.uniqueid ~= value then
                     local newOwner = self.utils.FindEntryByID(value, ESOPie.db.entries, ESOPie.EntryType.Ring)
                     if newOwner then
-                        local confirmStr = ZO_CachedStrFormat("!!Are you sure you want to move <<1>> from ring <<2>> to <<3>>?",
+                        local confirmStr = ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_ORG_CONFIRMMOVESLOT),
                                                 ESOPIE_COLOR_SLOT:Colorize(ui.currentEditing.name),
                                                 ESOPIE_COLOR_RING:Colorize(currentOwner.name),
                                                 ESOPIE_COLOR_RING:Colorize(newOwner.name))
-                        LibDialog:RegisterDialog(ESOPie.name, "ChangeOwnerDialog", "!!Move Slot", confirmStr, function() OnConfirmChangeSlotOwner(currentOwner, newOwner) end, nil, nil, true)
+                        LibDialog:RegisterDialog(ESOPie.name, "ChangeOwnerDialog", L(ESOPIE_SI_SETTINGS_ORG_CONFIRMMOVESLOT_TITLE), confirmStr, function() OnConfirmChangeSlotOwner(currentOwner, newOwner) end, nil, nil, true)
                         LibDialog:ShowDialog(ESOPie.name, "ChangeOwnerDialog")
                     else
                         LogWarning("Could not find ring <%d> when trying to move slot.", value)
@@ -1101,7 +1101,7 @@ function ESOPie:InitializeSettings()
         {
             type = "header",
             reference = "ESOPIE_Configure_Header",
-            name = "!!Configure Entry"
+            name = L(ESOPIE_SI_SETTINGS_CONF_ENTRYEDITHEADER)
         },
         {
             type = "editbox",

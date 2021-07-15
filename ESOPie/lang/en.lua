@@ -93,18 +93,22 @@ local strings = {
     ESOPIE_SI_SETTINGS_CONFIRMCHANGEACTION_TITLE= "Change Slot Action",
 
     ESOPIE_SI_SETTINGS_CONFIGURESLOTMENU        = "Slot Options",
+    ESOPIE_SI_SETTINGS_CONF_ENTRYEDITHEADER     = "Configure Entry",
+    ESOPIE_SI_SETTINGS_CONF_RINGEDITHEADER      = "Ring: <<1>>",
+    ESOPIE_SI_SETTINGS_CONF_SLOTEDITHEADER      = "Slot: <<1>> in <<2>>",
+    ESOPIE_SI_SETTINGS_CONF_ICONHEADER          = "Slot Icon",
     ESOPIE_SI_SETTINGS_BROWSEICON               = "Browse for Icon",
     ESOPIE_SI_SETTINGS_BROWSEICON_TT            = "Select an icon for the slot.",
     ESOPIE_SI_SETTINGS_ICONPATH                 = "Icon Path",
     ESOPIE_SI_SETTINGS_ICONPATH_TT              = "Any icon can be used if you know the path.",
     ESOPIE_SI_SETTINGS_MAGICICONDESC            = "Tip: Select the first icon in the list or remove the path below to use an automatic icon. ESOPie will use the icon of the collection item instead.",
-    ESOPIE_SI_SETTINGS_SLOTACTION               = "Slot Action",
+    ESOPIE_SI_SETTINGS_CONF_ACTIONHEADER        = "Slot Action",
+    ESOPIE_SI_SETTINGS_SLOTACTION               = "Action",
     ESOPIE_SI_SETTINGS_SLOTACTION_TT            = "Select the action that should occur when this slot is activated.",
 
     ESOPIE_SI_SETTINGS_SUBRINGMENU              = "Subring",
     ESOPIE_SI_SETTINGS_SUBRING                  = "Subring",
     ESOPIE_SI_SETTINGS_SUBRING_TT               = "Subring to open",
-
 
     ESOPIE_SI_SETTINGS_COLLECTIONMENU           = "Collection",
     ESOPIE_SI_SETTINGS_COLLECTIONCATEGORY       = "Category",
@@ -115,6 +119,13 @@ local strings = {
     ESOPIE_SI_SETTINGS_COMMANDMENU              = "Command",
     ESOPIE_SI_SETTINGS_COMMAND                  = "Command",
     ESOPIE_SI_SETTINGS_COMMAND_TT               = "Chat command or Lua code to execute when activated.",
+
+    ESOPIE_SI_SETTINGS_ORG_HEADER               = "Slot Organization",
+    ESOPIE_SI_SETTINGS_ORG_MOVETORING           = "Move To",
+    ESOPIE_SI_SETTINGS_ORG_MOVETORING_TT        = "Select the ring to move this slot to.",
+
+    ESOPIE_SI_SETTINGS_ORG_CONFIRMMOVESLOT      = "Are you sure you want to move <<1>> from <<2>> to <<3>>?",
+    ESOPIE_SI_SETTINGS_ORG_CONFIRMMOVESLOT_TITLE= "Move Slot",
 
     ESOPIE_SI_SETTINGS_EXT_DRMENU               = "Dressing Room",
     ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT         = "Slot",

@@ -1133,7 +1133,7 @@ function ESOPie:InitializeSettings()
                 local ringToAddSlot = nil
                 if self.utils.EntryIsRing(ui.currentEditing) then
                     ringToAddSlot = ui.currentEditing
-                elseif self.utils.EntryIsEntry(ui.currentEditing) then
+                elseif self.utils.EntryIsSlot(ui.currentEditing) then
                     ringToAddSlot = self.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
                 end
                 return ringToAddSlot == nil or #ringToAddSlot.slots >= ESOPie.maxVisibleSlots

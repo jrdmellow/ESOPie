@@ -201,7 +201,7 @@ end
 
 ESOPie.utils.IsActionOfType = function(entry, actionType)
     assert(actionType and type(actionType) == "number")
-    return entry.action == actionType
+    return entry and entry.action == actionType
 end
 
 ESOPie.utils.IsActionAnyOfType = function(entry, actionTypes)
@@ -243,3 +243,10 @@ ESOPie.utils.CollectionHasCategory = function(entry)
         --ESOPie.Action.SetPolymorphm
     })
 end
+
+ESOPIE_COLOR_RING = ZO_ColorDef:New("D68F4D")
+ESOPIE_COLOR_SLOT = ZO_ColorDef:New("71C9B4")
+
+ESOPIE_COLOR_PRIMARY = ZO_ColorDef:New("719DC9")
+ESOPIE_COLOR_SECONDARY = ZO_ColorDef:New("93A8BD")
+ESOPIE_COLOR_ACTION = ZO_ColorDef:New("FFEE55")

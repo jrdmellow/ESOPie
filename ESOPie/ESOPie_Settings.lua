@@ -168,10 +168,12 @@ local ui = {
     actionChoicesValues = {},
     bindingRingChoices = {},
     bindingRingValues = {},
+    allRingChoices = {},
+    allRingValues = {},
     configurationChoices = {},
     configurationValues = {},
     selectedCollectionCategory = 0,
-    currentEditing = nil
+    currentEditing = nil,
 }
 
 -------------------------------------------------------------------------------
@@ -198,6 +200,16 @@ end
 
 -------------------------------------------------------------------------------
 -- Entry Utilities
+
+local function GetColorForEntry(entry)
+    if ESOPie.utils.EntryIsRing(entry) then
+        return ESOPIE_COLOR_RING
+    elseif ESOPie.utils.EntryIsSlot(entry) then
+        return ESOPIE_COLOR_SLOT
+    else
+        return ESOPIE_COLOR_PRIMARY
+    end
+end
 
 local function RemoveEntry(uniqueid, ensureType)
     local entryIndex = ESOPie.utils.FindEntryIndexByID(uniqueid, ESOPie.db.entries, ensureType)
@@ -379,6 +391,26 @@ end
 -------------------------------------------------------------------------------
 -- UI Updates
 
+local function UpdateHeader(controlName, text)
+    local control = WINDOW_MANAGER:GetControlByName(controlName)
+    if not control then
+        LogVerbose("[Update] Unable to find control (%s)", controlName)
+        return
+    end
+    control.data.name = text
+    control:UpdateValue()
+end
+
+local function UpdateDescription(controlName, text)
+    local control = WINDOW_MANAGER:GetControlByName(controlName)
+    if not control then
+        LogVerbose("[Update] Unable to find control (%s)", controlName)
+        return
+    end
+    control.data.text = text
+    control:UpdateValue()
+end
+
 local function UpdateDropdown(controlName, choices, values, tooltips)
     local control = WINDOW_MANAGER:GetControlByName(controlName)
     if not control then
@@ -452,12 +484,17 @@ end
 
 local function RebuildRingDropdowns()
     if not ESOPie.db then LogError("SavedVars DB not initialized.") return end
+    ZO_ClearTable(ui.allRingChoices)
+    ZO_ClearTable(ui.allRingValues)
     ZO_ClearTable(ui.bindingRingChoices)
     ZO_ClearTable(ui.bindingRingValues)
+    -- Add "Disabled" selection
     table.insert(ui.bindingRingChoices, L(ESOPIE_SI_SETTINGS_BINDINGDISABLED))
     table.insert(ui.bindingRingValues, 0)
     for _, entry in pairs(ESOPie.db.entries) do
         if ESOPie.utils.EntryIsRing(entry) then
+            table.insert(ui.allRingChoices, entry.name)
+            table.insert(ui.allRingValues, entry.uniqueid)
             table.insert(ui.bindingRingChoices, entry.name)
             table.insert(ui.bindingRingValues, entry.uniqueid)
         end
@@ -466,18 +503,19 @@ local function RebuildRingDropdowns()
         UpdateDropdown("ESOPIE_General_RingBinding" .. tostring(i), ui.bindingRingChoices, ui.bindingRingValues)
     end
     UpdateDropdown("ESOPIE_SlotEdit_Subring", ui.bindingRingChoices, ui.bindingRingValues)
+    UpdateDropdown("ESOPIE_Slot_MoveToRing", ui.allRingChoices, ui.allRingValues)
 
     ZO_ClearTable(ui.configurationChoices)
     ZO_ClearTable(ui.configurationValues)
     for _, ringId in pairs(ui.bindingRingValues) do
         local ring = ESOPie.utils.FindEntryByID(ringId, ESOPie.db.entries, ESOPie.EntryType.Ring)
         if ring then
-            table.insert(ui.configurationChoices, ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_DROPDOWNRING), ZO_SECOND_CONTRAST_TEXT:Colorize(ring.name)))
+            table.insert(ui.configurationChoices, ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_DROPDOWNRING), ESOPIE_COLOR_RING:Colorize(ring.name)))
             table.insert(ui.configurationValues, ring.uniqueid)
             for _, slotId in pairs(ring.slots) do
                 local slot = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
                 if slot then
-                    table.insert(ui.configurationChoices, ZO_CachedStrFormat("-> <<1>>", ZO_DISABLED_TEXT:Colorize(slot.name)))
+                    table.insert(ui.configurationChoices, ZO_CachedStrFormat("-> <<1>>", ESOPIE_COLOR_SLOT:Colorize(slot.name)))
                     table.insert(ui.configurationValues, slot.uniqueid)
                 end
             end
@@ -493,7 +531,7 @@ local function RebuildExtensionOptions()
             table.insert(drSlotOptions.names, ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_EXT_DRSLOT), i))
             table.insert(drSlotOptions.values, i)
         end
-        UpdateDropdown("ESOPie_DressingRoom_SlotSelect", drSlotOptions.names, drSlotOptions.values)
+        UpdateDropdown("ESOPIE_DressingRoom_SlotSelect", drSlotOptions.names, drSlotOptions.values)
     end
 end
 
@@ -515,11 +553,30 @@ local function RefreshBindingWarning()
     end
 
     if validBindingCount == 0 then
-        ESOPie_BindingWarning.data.text = L(ESOPIE_SI_SETTINGS_NOBINDINGSDETECTED)
+        UpdateDescription("ESOPie_BindingWarning", L(ESOPIE_SI_SETTINGS_NOBINDINGSDETECTED))
     else
-        ESOPie_BindingWarning.data.text = ""
+        UpdateDescription("ESOPie_BindingWarning", "")
     end
-    ESOPie_BindingWarning:UpdateValue()
+end
+
+local function RefreshConfigurationHeader()
+    if ESOPie.utils.EntryIsRing(ui.currentEditing) then
+        UpdateHeader("ESOPIE_Configure_Header", ZO_CachedStrFormat("!!Ring: <<1>>", ESOPIE_COLOR_RING:Colorize(ui.currentEditing.name)))
+    elseif ESOPie.utils.EntryIsSlot(ui.currentEditing) then
+        local owner = ESOPie.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+        if owner then
+            UpdateHeader("ESOPIE_Configure_Header", ZO_CachedStrFormat("!!Slot: <<1>> in <<2>>", ESOPIE_COLOR_SLOT:Colorize(ui.currentEditing.name), ESOPIE_COLOR_RING:Colorize(owner.name)))
+        else
+            UpdateHeader("ESOPIE_Configure_Header", "!!Configure Entry")
+        end
+    else
+        UpdateHeader("ESOPIE_Configure_Header", "!!Configure Entry")
+    end
+end
+
+local function SetEditEntry(entry)
+    ui.currentEditing = entry
+    RefreshConfigurationHeader()
 end
 
 -------------------------------------------------------------------------------
@@ -578,17 +635,36 @@ function ESOPie:InitializeSettings()
     local function OnConfirmRemoveEntry()
         if ESOPie.utils.EntryIsRing(ui.currentEditing) then
             RemoveRing(ui.currentEditing.uniqueid)
-            ui.currentEditing = nil
+            SetEditEntry(nil)
         elseif ESOPie.utils.EntryIsSlot(ui.currentEditing) then
             local owner = ESOPie.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
             RemoveSlot(ui.currentEditing.uniqueid)
-            ui.currentEditing = owner
+            SetEditEntry(owner)
         end
         if not ui.currentEditing then
-            ui.currentEditing = ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
+            SetEditEntry(ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries))
         end
         RebuildRingDropdowns()
         LAM.util.RequestRefreshIfNeeded(ESOPie.LAMPanel)
+    end
+
+    local function OnConfirmChangeSlotOwner(oldOwner, newOwner)
+        assert(ui.currentEditing and ESOPie.utils.EntryIsSlot(ui.currentEditing))
+        assert(newOwner and ESOPie.utils.EntryIsRing(newOwner))
+        LogVerbose("Moving slot to %s", newOwner.name)
+        table.insert(newOwner.slots, ui.currentEditing.uniqueid)
+        -- TODO: re-sort slots
+        if oldOwner then
+            assert(ESOPie.utils.EntryIsRing(oldOwner))
+            for i, slotId in pairs(oldOwner.slots) do
+                if slotId == ui.currentEditing.uniqueid then
+                    table.remove(oldOwner.slots, i)
+                    break
+                end
+            end
+        end
+        RebuildRingDropdowns()
+        RefreshConfigurationHeader()
     end
 
     local function OnConfirmChangeSlotAction(value)
@@ -630,6 +706,7 @@ function ESOPie:InitializeSettings()
 
         InitNextID()
         UpdateCollectionsCache()
+        RefreshConfigurationHeader()
         RebuildAll()
         ui.initialized = true
     end
@@ -654,11 +731,14 @@ function ESOPie:InitializeSettings()
     ui.collectionPopulateCallbacks[ESOPie.Action.SetCostume] = function() PopulateCollectablesBySubCategory({ COLLECTIBLE_CATEGORY_TYPE_COSTUME }, true) end
     ui.collectionPopulateCallbacks[ESOPie.Action.SetPolymorph] = function() PopulateCollectablesBySubCategory({ COLLECTIBLE_CATEGORY_TYPE_POLYMORPH }, true) end
 
-
-    ui.currentEditing = ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries)
+    SetEditEntry(ESOPie.utils.FindEntryByID(ESOPie.db.rootRings[1], ESOPie.db.entries))
 
     local subringMenuControls =
     {
+        {
+            type = "header",
+            name = "!!Slot Icon",
+        },
         {
             type = "iconpicker",
             name = L(ESOPIE_SI_SETTINGS_BROWSEICON),
@@ -711,7 +791,8 @@ function ESOPie:InitializeSettings()
         },
         -- TODO: visibility condition
         {
-            type = "divider",
+            type = "header",
+            name = "!!Slot Action Configuration",
         },
         {
             type = "dropdown",
@@ -733,7 +814,10 @@ function ESOPie:InitializeSettings()
                         local entryName = ui.currentEditing.name or ("Slot" .. tostring(ui.currentEditing.uniqueid))
                         local currentActionName = ESOPie.utils.GetActionTypeString(ui.currentEditing.action)
                         local newActionName = ESOPie.utils.GetActionTypeString(value)
-                        local confirmStr = ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_CONFIRMCHANGEACTION), entryName, newActionName, currentActionName)
+                        local confirmStr = ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_CONFIRMCHANGEACTION),
+                                                ESOPIE_COLOR_SLOT:Colorize(entryName),
+                                                ESOPIE_COLOR_ACTION:Colorize(newActionName),
+                                                ESOPIE_COLOR_ACTION:Colorize(currentActionName))
                         LibDialog:RegisterDialog(ESOPie.name, "ChangeActionTypeDialog", L(ESOPIE_SI_SETTINGS_CONFIRMCHANGEACTION_TITLE), confirmStr, function() OnConfirmChangeSlotAction(value) end, nil, nil, true)
                         LibDialog:ShowDialog(ESOPie.name, "ChangeActionTypeDialog")
                     else
@@ -755,7 +839,7 @@ function ESOPie:InitializeSettings()
                     sort = "name-up",
                     scrollable = true,
                     choices = ui.bindingRingChoices,
-                    choicesValues = ui.bindingRingChoices,
+                    choicesValues = ui.bindingRingValues,
                     getFunc = function()
                         if ESOPie.utils.IsSubringAction(ui.currentEditing) then
                             return ui.currentEditing.data
@@ -858,7 +942,7 @@ function ESOPie:InitializeSettings()
                 controls = {
                     {
                         type = "dropdown",
-                        reference = "ESOPie_DressingRoom_SlotSelect",
+                        reference = "ESOPIE_DressingRoom_SlotSelect",
                         name = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT),
                         tooltip = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT_TT),
                         scrollable = true,
@@ -882,6 +966,92 @@ function ESOPie:InitializeSettings()
         table.insert(subringMenuControls, dressingRoomSubmenu)
     end
 
+    table.insert(subringMenuControls, {
+        type = "header",
+        name = "!!Slot Organization",
+    })
+    table.insert(subringMenuControls, {
+        type = "dropdown",
+        reference = "ESOPIE_Slot_MoveToRing",
+        name = "!!Move To",
+        tooltip = "!!Select the ring to move this slot to.",
+        scrollable = true,
+        choices = ui.allRingChoices,
+        choicesValues = ui.allRingChoices,
+        getFunc = function()
+            if ui.currentEditing then
+                local owner = self.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+                if owner then
+                    return owner.uniqueid
+                end
+            end
+        end,
+        setFunc = function(value)
+            if ui.currentEditing then
+                local currentOwner = self.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+                if currentOwner and currentOwner.uniqueid ~= value then
+                    local newOwner = self.utils.FindEntryByID(value, ESOPie.db.entries, ESOPie.EntryType.Ring)
+                    if newOwner then
+                        local confirmStr = ZO_CachedStrFormat("!!Are you sure you want to move <<1>> from ring <<2>> to <<3>>?",
+                                                ESOPIE_COLOR_SLOT:Colorize(ui.currentEditing.name),
+                                                ESOPIE_COLOR_RING:Colorize(currentOwner.name),
+                                                ESOPIE_COLOR_RING:Colorize(newOwner.name))
+                        LibDialog:RegisterDialog(ESOPie.name, "ChangeOwnerDialog", "!!Move Slot", confirmStr, function() OnConfirmChangeSlotOwner(currentOwner, newOwner) end, nil, nil, true)
+                        LibDialog:ShowDialog(ESOPie.name, "ChangeOwnerDialog")
+                    else
+                        LogWarning("Could not find ring <%d> when trying to move slot.", value)
+                    end
+                end
+            end
+        end,
+    })
+
+    local generalOptionsControls = {}
+    table.insert(generalOptionsControls, {
+            type = "header",
+            name = L(ESOPIE_SI_SETTINGS_BINDINGSHEADER),
+    })
+
+    for i = 1, ESOPie.maxRingBindings do
+        table.insert(generalOptionsControls, {
+            type = "dropdown",
+            reference = "ESOPIE_General_RingBinding" .. i,
+            name = L("ESOPIE_SI_SETTINGS_RINGBINDING", i),
+            scrollable = true,
+            choices = ui.bindingRingChoices,
+            choicesValues = ui.ringValues,
+            getFunc = function()
+                return ESOPie.db.rootRings[i]
+            end,
+            setFunc = function(value)
+                ESOPie.db.rootRings[i] = value
+            end,
+        })
+    end
+
+    table.insert(generalOptionsControls, {
+        type = "header",
+        name = L(ESOPIE_SI_SETTINGS_CONTROLSHEADER),
+    })
+    table.insert(generalOptionsControls, {
+        type = "dropdown",
+        name = L(ESOPIE_SI_SETTINGS_KEYBOARDINTERACTMODE),
+        scrollable = true,
+        choices = { L(ESOPIE_SI_SETTINGS_INTERACTMODEHOLD), L(ESOPIE_SI_SETTINGS_INTERACTMODETOGGLE)  },
+        choicesValues = { ESOPie.InteractMode.Hold, ESOPie.InteractMode.Toggle },
+        getFunc = function() return ESOPie.db.controlOptions["keyboard"].bindingInteractMode end,
+        setFunc = function(value) ESOPie.db.controlOptions["keyboard"].bindingInteractMode = value end,
+    })
+    table.insert(generalOptionsControls, {
+        type = "dropdown",
+        name = L(ESOPIE_SI_SETTINGS_GAMEPADINTERACTMODE),
+        scrollable = true,
+        choices = { L(ESOPIE_SI_SETTINGS_INTERACTMODEHOLD), L(ESOPIE_SI_SETTINGS_INTERACTMODETOGGLE)  },
+        choicesValues = { ESOPie.InteractMode.Hold, ESOPie.InteractMode.Toggle },
+        getFunc = function() return ESOPie.db.controlOptions["gamepad"].bindingInteractMode end,
+        setFunc = function(value) ESOPie.db.controlOptions["gamepad"].bindingInteractMode = value end,
+    })
+
     local optionsTable = {
         {
             type = "description",
@@ -891,118 +1061,7 @@ function ESOPie:InitializeSettings()
         {
             type = "submenu",
             name = L(ESOPIE_SI_SETTINGS_GENERALMENU_NAME),
-            controls = {
-                {
-                    type = "header",
-                    name = L(ESOPIE_SI_SETTINGS_BINDINGSHEADER),
-                },
-                {
-                    type = "dropdown",
-                    reference = "ESOPIE_General_RingBinding1",
-                    name = L("ESOPIE_SI_SETTINGS_RINGBINDING", 1),
-                    scrollable = true,
-                    choices = ui.bindingRingChoices,
-                    choicesValues = ui.ringValues,
-                    getFunc = function()
-                        return ESOPie.db.rootRings[1]
-                    end,
-                    setFunc = function(value)
-                        ESOPie.db.rootRings[1] = value
-                    end,
-                },
-                {
-                    type = "dropdown",
-                    reference = "ESOPIE_General_RingBinding2",
-                    name = L("ESOPIE_SI_SETTINGS_RINGBINDING", 2),
-                    scrollable = true,
-                    choices = ui.bindingRingChoices,
-                    choicesValues = ui.ringValues,
-                    getFunc = function()
-                        return ESOPie.db.rootRings[2]
-                    end,
-                    setFunc = function(value)
-                        ESOPie.db.rootRings[2] = value
-                    end,
-                },
-                {
-                    type = "dropdown",
-                    reference = "ESOPIE_General_RingBinding3",
-                    name = L("ESOPIE_SI_SETTINGS_RINGBINDING", 3),
-                    scrollable = true,
-                    choices = ui.bindingRingChoices,
-                    choicesValues = ui.ringValues,
-                    getFunc = function()
-                        return ESOPie.db.rootRings[3]
-                    end,
-                    setFunc = function(value)
-                        ESOPie.db.rootRings[3] = value
-                    end,
-                },
-                {
-                    type = "dropdown",
-                    reference = "ESOPIE_General_RingBinding4",
-                    name = L("ESOPIE_SI_SETTINGS_RINGBINDING", 4),
-                    scrollable = true,
-                    choices = ui.bindingRingChoices,
-                    choicesValues = ui.ringValues,
-                    getFunc = function()
-                        return ESOPie.db.rootRings[4]
-                    end,
-                    setFunc = function(value)
-                        ESOPie.db.rootRings[4] = value
-                    end,
-                },
-                {
-                    type = "dropdown",
-                    reference = "ESOPIE_General_RingBinding5",
-                    name = L("ESOPIE_SI_SETTINGS_RINGBINDING", 5),
-                    scrollable = true,
-                    choices = ui.bindingRingChoices,
-                    choicesValues = ui.ringValues,
-                    getFunc = function()
-                        return ESOPie.db.rootRings[5]
-                    end,
-                    setFunc = function(value)
-                        ESOPie.db.rootRings[5] = value
-                    end,
-                },
-                {
-                    type = "dropdown",
-                    reference = "ESOPIE_General_RingBinding6",
-                    name = L("ESOPIE_SI_SETTINGS_RINGBINDING", 6),
-                    scrollable = true,
-                    choices = ui.bindingRingChoices,
-                    choicesValues = ui.ringValues,
-                    getFunc = function()
-                        return ESOPie.db.rootRings[6]
-                    end,
-                    setFunc = function(value)
-                        ESOPie.db.rootRings[6] = value
-                    end,
-                },
-                {
-                    type = "header",
-                    name = L(ESOPIE_SI_SETTINGS_CONTROLSHEADER),
-                },
-                {
-                    type = "dropdown",
-                    name = L(ESOPIE_SI_SETTINGS_KEYBOARDINTERACTMODE),
-                    scrollable = true,
-                    choices = { L(ESOPIE_SI_SETTINGS_INTERACTMODEHOLD), L(ESOPIE_SI_SETTINGS_INTERACTMODETOGGLE)  },
-                    choicesValues = { ESOPie.InteractMode.Hold, ESOPie.InteractMode.Toggle },
-                    getFunc = function() return ESOPie.db.controlOptions["keyboard"].bindingInteractMode end,
-                    setFunc = function(value) ESOPie.db.controlOptions["keyboard"].bindingInteractMode = value end,
-                },
-                {
-                    type = "dropdown",
-                    name = L(ESOPIE_SI_SETTINGS_GAMEPADINTERACTMODE),
-                    scrollable = true,
-                    choices = { L(ESOPIE_SI_SETTINGS_INTERACTMODEHOLD), L(ESOPIE_SI_SETTINGS_INTERACTMODETOGGLE)  },
-                    choicesValues = { ESOPie.InteractMode.Hold, ESOPie.InteractMode.Toggle },
-                    getFunc = function() return ESOPie.db.controlOptions["gamepad"].bindingInteractMode end,
-                    setFunc = function(value) ESOPie.db.controlOptions["gamepad"].bindingInteractMode = value end,
-                },
-            },
+            controls = generalOptionsControls,
         },
         -----------------------------------------------------------------------
         {
@@ -1015,7 +1074,7 @@ function ESOPie:InitializeSettings()
             tooltip = L(ESOPIE_SI_SETTINGS_NEWRING_TT),
             width = "half",
             func = function()
-                ui.currentEditing = CreateNewRing()
+                SetEditEntry(CreateNewRing())
                 RebuildAll()
             end,
         },
@@ -1034,10 +1093,15 @@ function ESOPie:InitializeSettings()
                 return 0
             end,
             setFunc = function(value)
-                ui.currentEditing = ESOPie.utils.FindEntryByID(value, ESOPie.db.entries)
+                SetEditEntry(ESOPie.utils.FindEntryByID(value, ESOPie.db.entries))
                 UpdateCollectionsCache()
                 RebuildAll()
             end,
+        },
+        {
+            type = "header",
+            reference = "ESOPIE_Configure_Header",
+            name = "!!Configure Entry"
         },
         {
             type = "editbox",
@@ -1056,6 +1120,7 @@ function ESOPie:InitializeSettings()
                 if ui.currentEditing then
                     ui.currentEditing.name = value
                     RebuildRingDropdowns()
+                    RefreshConfigurationHeader()
                 end
             end,
         },
@@ -1073,8 +1138,7 @@ function ESOPie:InitializeSettings()
                     ringToAddSlot = self.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
                 end
                 if ringToAddSlot then
-                    local newSlot = CreateNewSlot(ringToAddSlot)
-                    ui.currentEditing = newSlot
+                    SetEditEntry(CreateNewSlot(ringToAddSlot))
                     RebuildRingDropdowns()
                     UpdateCollectionsCache()
                     RebuildCollectionsDropdowns()
@@ -1089,13 +1153,14 @@ function ESOPie:InitializeSettings()
             disabled = function() return ui.currentEditing == nil end,
             func = function()
                 local entryName = ui.currentEditing.name or ("Entry" .. tostring(ui.currentEditing.uniqueid))
-                local confirmStr = ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_CONFIRMREMOVE), entryName)
+                local entryColor = GetColorForEntry(ui.currentEditing)
+                local confirmStr = ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_CONFIRMREMOVE), entryColor:Colorize(entryName))
                 if ESOPie.utils.EntryIsRing(ui.currentEditing) then
                     local slotNames = {}
                     for _, slotId in pairs(ui.currentEditing.slots) do
                         local slot = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
                         if slot then
-                            table.insert(slotNames, ZO_CachedStrFormat(" - |c55eeff<<1>>|r", slot.name or ("Slot" .. slotId)))
+                            table.insert(slotNames, ZO_CachedStrFormat(" - <<1>>", ESOPIE_COLOR_SLOT:Colorize(slot.name or ("Slot" .. slotId))))
                         end
                     end
 

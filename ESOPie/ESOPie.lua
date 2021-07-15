@@ -91,7 +91,7 @@ end
 
 local function ExecuteGoToHome(entry, data)
     assert(entry)
-    LogVerboseC("debugExecution", "ExecuteUseCollectible(%s): %s", entry.name or "nil", data or "nil")
+    LogVerboseC("debugExecution", "ExecuteGoToHome(%s): %s", entry.name or "nil", data or "nil")
     if not CanLeaveCurrentLocationViaTeleport() then
         Notify(L(ESOPIE_SI_FASTTRAVELUNAVAILABLE))
         return

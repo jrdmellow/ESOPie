@@ -1129,7 +1129,15 @@ function ESOPie:InitializeSettings()
             name = L(ESOPIE_SI_SETTINGS_NEWSLOT),
             tooltip = ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_NEWSLOT_TT), ESOPie.maxVisibleSlots),
             width = "half",
-            disabled = function() return not ui.currentEditing end,
+            disabled = function()
+                local ringToAddSlot = nil
+                if self.utils.EntryIsRing(ui.currentEditing) then
+                    ringToAddSlot = ui.currentEditing
+                elseif self.utils.EntryIsEntry(ui.currentEditing) then
+                    ringToAddSlot = self.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+                end
+                return ringToAddSlot == nil or #ringToAddSlot.slots >= ESOPie.maxVisibleSlots
+            end,
             func = function()
                 local ringToAddSlot = nil
                 if self.utils.EntryIsRing(ui.currentEditing) then

@@ -15,6 +15,7 @@ local Notify = ESOPie.Notify
 local TOOLTIP_DEFAULT_FONT = "ZoFontGame"
 local TOOLTIP_TITLE_FONT = "ZoFontTooltipTitle"
 
+local ESOPIE_DEFAULT_SLOTORDER = 50
 local ESOPIE_DEFAULT_RING = {
     uniqueid = 0,
     type = ESOPie.EntryType.Ring,
@@ -23,6 +24,7 @@ local ESOPIE_DEFAULT_RING = {
 }
 local ESOPIE_DEFAULT_SLOTINFO = {
     uniqueid = 0,
+    sortorder = ESOPIE_DEFAULT_SLOTORDER,
     type = ESOPie.EntryType.Slot,
     name = L(ESOPIE_SI_DEFAULT_ACTIONNAME),
     icon = "",
@@ -35,6 +37,7 @@ local ESOPIE_DB_DEFAULT = {
         --- SLOTS
         {
             ["uniqueid"] = 1,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_SOCIAL),
             ["action"] = ESOPie.Action.Submenu,
@@ -43,6 +46,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 2,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_SHOWOFF),
             ["action"] = ESOPie.Action.Submenu,
@@ -51,6 +55,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 3,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_MUSIC),
             ["action"] = ESOPie.Action.Submenu,
@@ -59,6 +64,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 4,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_LUTE),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -67,6 +73,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 5,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_DRUM),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -75,6 +82,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 6,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_FLUTE),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -83,6 +91,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 7,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_SCORCH),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -91,6 +100,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 8,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_FLEX),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -99,6 +109,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 9,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_GREET),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -107,6 +118,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 10,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_CLAP),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -115,6 +127,7 @@ local ESOPIE_DB_DEFAULT = {
         },
         {
             ["uniqueid"] = 11,
+            ["sortorder"] = ESOPIE_DEFAULT_SLOTORDER,
             ["type"] = ESOPie.EntryType.Slot,
             ["name"] = L(ESOPIE_SI_DEFAULT_CONGRATULATE),
             ["action"] = ESOPie.Action.PlayEmote,
@@ -208,6 +221,80 @@ local function GetColorForEntry(entry)
         return ESOPIE_COLOR_SLOT
     else
         return ESOPIE_COLOR_PRIMARY
+   	end
+end
+
+local function SortRingSlots(ringEntry)
+    assert(ringEntry and ringEntry.type == ESOPie.EntryType.Ring)
+    if ringEntry.slots and #ringEntry.slots > 1 then
+        LogVerbose("SortRingSlots(%s): { %s }", ringEntry.name, table.concat(ringEntry.slots, ", "))
+        local slotsById = {}
+        for _, slotId in pairs(ringEntry.slots) do
+            slotsById[slotId] = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
+        end
+        table.sort(ringEntry.slots, function(slotIdA, slotIdB)
+            local slotOrderA = ESOPIE_DEFAULT_SLOTORDER
+            local slotOrderB = ESOPIE_DEFAULT_SLOTORDER
+            local slotEntryA = slotsById[slotIdA]
+            if slotEntryA and slotEntryA.sortorder then
+                slotOrderA = slotEntryA.sortorder
+            end
+            local slotEntryB = slotsById[slotIdB]
+            if slotEntryB and slotEntryB.sortorder then
+                slotOrderB = slotEntryB.sortorder
+            end
+            if slotOrderB ~= slotOrderA then
+                return slotOrderB > slotOrderA
+            else
+                return slotIdB > slotIdA
+            end
+        end)
+        LogVerbose("SortRingSlots(%s): { %s }", ringEntry.name, table.concat(ringEntry.slots, ", "))
+    end
+end
+
+local function SortAllRings()
+    for _, entry in pairs(ESOPie.db.entries) do
+        if ESOPie.utils.EntryIsRing(entry) then
+            SortRingSlots(entry)
+        end
+    end
+end
+
+local function CleanOrphanedSlots()
+    LogVerbose("Cleaning up orphaned slots")
+    local rings = {}
+    local slots = {}
+    for index, entry in pairs(ESOPie.db.entries) do
+        if ESOPie.utils.EntryIsRing(entry) then
+            table.insert(rings, entry)
+        elseif ESOPie.utils.EntryIsSlot(entry) then
+            table.insert(slots, entry)
+        else
+            LogVerbose("Invalid slot type in entries at index %d", index)
+        end
+    end
+
+    local orphans = {}
+    for _, slot in pairs(slots) do
+        local foundOwner = false
+        for _, ring in pairs(rings) do
+            for _, slotId in pairs(ring.slots) do
+                if slotId == slot.uniqueid then foundOwner = true break end
+            end
+            if foundOwner then break end
+        end
+        if not foundOwner then
+            table.insert(orphans, slot)
+        end
+    end
+
+    if not ZO_IsTableEmpty(orphans) then
+        for _, entry in pairs(orphans) do
+            LogVerbose("> %s", entry.name)
+            RemoveEntry(entry.uniqueid)
+        end
+        LogWarning("Cleaning up %d orphaned slots", #orphans)
     end
 end
 
@@ -588,49 +675,14 @@ function ESOPie:ResetToDefault()
     LogDebug("Settings reset to default.")
 end
 
-function ESOPie:CleanOrphanedSlots()
-    LogVerbose("Cleaning up orphaned slots")
-    local rings = {}
-    local slots = {}
-    for index, entry in pairs(ESOPie.db.entries) do
-        if ESOPie.utils.EntryIsRing(entry) then
-            table.insert(rings, entry)
-        elseif ESOPie.utils.EntryIsSlot(entry) then
-            table.insert(slots, entry)
-        else
-            LogVerbose("Invalid slot type in entries at index %d", index)
-        end
-    end
-
-    local orphans = {}
-    for _, slot in pairs(slots) do
-        local foundOwner = false
-        for _, ring in pairs(rings) do
-            for _, slotId in pairs(ring.slots) do
-                if slotId == slot.uniqueid then foundOwner = true break end
-            end
-            if foundOwner then break end
-        end
-        if not foundOwner then
-            table.insert(orphans, slot)
-        end
-    end
-
-    if not ZO_IsTableEmpty(orphans) then
-        for _, entry in pairs(orphans) do
-            LogVerbose("> %s", entry.name)
-            RemoveEntry(entry.uniqueid)
-        end
-        LogWarning("Cleaning up %d orphaned slots", #orphans)
-    end
-end
 -------------------------------------------------------------------------------
 -- Initialize Addon Menu and Settings DB
 
 function ESOPie:InitializeSettings()
     LogVerbose("Loading save data %s v%d.", self.savedVars, self.savedVarsVersion)
     self.db = ZO_SavedVars:NewAccountWide(self.savedVars, self.savedVarsVersion, nil, ESOPIE_DB_DEFAULT)
-    self:CleanOrphanedSlots()
+    CleanOrphanedSlots()
+    SortAllRings()
 
     local function OnConfirmRemoveEntry()
         if ESOPie.utils.EntryIsRing(ui.currentEditing) then
@@ -971,6 +1023,29 @@ function ESOPie:InitializeSettings()
         name = L(ESOPIE_SI_SETTINGS_ORG_HEADER),
     })
     table.insert(subringMenuControls, {
+        type = "slider",
+        name = "!!Sorting Order",
+        tooltip = "!!Entries will be sorted from the lowest value to highest.",
+        min = 0,
+        max = 100,
+        getFunc = function()
+            if ui.currentEditing and ui.currentEditing.sortorder then
+                return ui.currentEditing.sortorder
+            end
+            return ESOPIE_DEFAULT_SLOTORDER
+        end,
+        setFunc = function(value)
+            if ui.currentEditing then
+                ui.currentEditing.sortorder = value
+                local owner = self.utils.FindEntryOwner(ui.currentEditing.uniqueid, ESOPie.db.entries, ESOPie.EntryType.Ring)
+                if owner then
+                    SortRingSlots(owner)
+                    RebuildRingDropdowns()
+                end
+            end
+        end,
+    })
+    table.insert(subringMenuControls, {
         type = "dropdown",
         reference = "ESOPIE_Slot_MoveToRing",
         name = L(ESOPIE_SI_SETTINGS_ORG_MOVETORING),
@@ -1147,6 +1222,7 @@ function ESOPie:InitializeSettings()
                 end
                 if ringToAddSlot then
                     SetEditEntry(CreateNewSlot(ringToAddSlot))
+                    SortRingSlots(ringToAddSlot)
                     RebuildRingDropdowns()
                     UpdateCollectionsCache()
                     RebuildCollectionsDropdowns()

@@ -230,7 +230,11 @@ local function SortRingSlots(ringEntry)
     if ringEntry.slots and #ringEntry.slots > 1 then
         local slotsById = {}
         for _, slotId in pairs(ringEntry.slots) do
-            slotsById[slotId] = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
+            local slotEntry = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
+            if slotEntry then
+                if slotEntry.sortorder == nil then slotEntry.sortorder = ESOPIE_DEFAULT_SLOTORDER end
+                slotsById[slotId] = slotEntry
+            end
         end
         table.sort(ringEntry.slots, function(slotIdA, slotIdB)
             if not slotIdA or not slotsById[slotIdA] then LogWarning("Invalid slot ID for sort <%d>", slotIdA) return false end
@@ -240,14 +244,11 @@ local function SortRingSlots(ringEntry)
             assert(type(slotOrderA) == "number")
             assert(type(slotOrderB) == "number")
             if slotOrderA ~= slotOrderB then
-                LogVerbose("Slot[%s](%d) < [%s](%d)", slotsById[slotIdA].name, slotOrderA, slotsById[slotIdB].name, slotOrderB)
                 return slotOrderA < slotOrderB
             else
-                LogVerbose("Slot[%s](%d) < [%s](%d) !! BY ID", slotsById[slotIdA].name, slotIdA, slotsById[slotIdB].name, slotIdB)
                 return slotIdA < slotIdB
             end
         end)
-        LogVerbose("Result: { %s }", table.concat(ringEntry.slots, ", "))
     end
 end
 
@@ -313,15 +314,11 @@ local function DuplicateRing(sourceRing, duplicateAllSlots)
     ZO_DeepTableCopy(sourceRing, newRing)
     newRing.uniqueid = GetNextID()
     table.insert(ESOPie.db.entries, newRing)
-    LogVerbose("Duplicate1")
     if duplicateAllSlots then
-        LogVerbose("Duplicate2")
-        newRing.slots = {}
+        ZO_ClearTable(newRing.slots)
         for i, slotId in pairs(sourceRing.slots) do
-            LogVerbose("Duplicate2.%d", i)
             local slotEntry = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
             if slotEntry then
-                LogVerbose("Duplicate2.%d.2", i)
                 DuplicateSlot(slotEntry, newRing)
             end
         end
@@ -354,20 +351,8 @@ local function DuplicateEntry(entry)
     return newEntry
 end
 
-local function CleanOrphanedSlots()
-    LogVerbose("Cleaning up orphaned slots")
-    local rings = {}
-    local slots = {}
-    for index, entry in pairs(ESOPie.db.entries) do
-        if ESOPie.utils.EntryIsRing(entry) then
-            table.insert(rings, entry)
-        elseif ESOPie.utils.EntryIsSlot(entry) then
-            table.insert(slots, entry)
-        else
-            LogVerbose("Invalid slot type in entries at index %d", index)
-        end
-    end
-
+local function CleanOrphanedSlots(rings, slots)
+    LogVerbose("> Cleaning up orphaned slots")
     local orphans = {}
     for _, slot in pairs(slots) do
         local foundOwner = false
@@ -387,8 +372,41 @@ local function CleanOrphanedSlots()
             LogVerbose("> %s", entry.name)
             RemoveEntry(entry.uniqueid)
         end
-        LogWarning("Cleaning up %d orphaned slots", #orphans)
+        LogWarning("> Cleaning up %d orphaned slots", #orphans)
     end
+end
+
+local function CleanDeadEnds(rings)
+    LogVerbose("> Cleaning up dead-ends")
+    for _, ring in pairs(rings) do
+        if ring then
+            local cleanSlots = {}
+            for _, slotId in pairs(ring.slots) do
+                if ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot) ~= nil then
+                    table.insert(cleanSlots, slotId)
+                end
+            end
+            ZO_ClearTable(ring.slots)
+            ZO_DeepTableCopy(cleanSlots, ring.slots)
+        end
+    end
+end
+
+local function CleanSaveData()
+    LogVerbose("Cleaning up save data")
+    local rings = {}
+    local slots = {}
+    for index, entry in pairs(ESOPie.db.entries) do
+        if ESOPie.utils.EntryIsRing(entry) then
+            table.insert(rings, entry)
+        elseif ESOPie.utils.EntryIsSlot(entry) then
+            table.insert(slots, entry)
+        else
+            LogVerbose("Invalid slot type in entries at index %d", index)
+        end
+    end
+    CleanOrphanedSlots(rings, slots)
+    CleanDeadEnds(rings)
 end
 
 -------------------------------------------------------------------------------
@@ -441,7 +459,6 @@ local function PopulateCollectablesByCategory(categoryTypes, unlockedOnly)
         local categoryName = L("SI_COLLECTIBLECATEGORYTYPE", categoryType)
         table.insert(ui.collectibleCategories.names, categoryName)
         table.insert(ui.collectibleCategories.values, categoryType)
-        local collectibles = { names = {}, values = {}, tooltips = {} }
         for index = 1, GetTotalCollectiblesByCategoryType(categoryType) do
             local collectibleId = GetCollectibleIdFromType(categoryType, index)
             if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
@@ -635,20 +652,16 @@ local function RebuildRingDropdowns()
     for _, ringId in pairs(ui.bindingRingValues) do
         local ring = ESOPie.utils.FindEntryByID(ringId, ESOPie.db.entries, ESOPie.EntryType.Ring)
         if ring then
-            SortRingSlots(ring)
-            table.insert(ui.configurationChoices, ZO_CachedStrFormat(L(ESOPIE_SI_SETTINGS_DROPDOWNRING), ESOPIE_COLOR_RING:Colorize(ring.name)))
+            table.insert(ui.configurationChoices, ZO_CachedStrFormat("<<<<1>>>>", ESOPIE_COLOR_RING:Colorize(ring.name)))
             table.insert(ui.configurationValues, ring.uniqueid)
             for _, slotId in pairs(ring.slots) do
                 local slot = ESOPie.utils.FindEntryByID(slotId, ESOPie.db.entries, ESOPie.EntryType.Slot)
                 if slot then
-                    table.insert(ui.configurationChoices, ZO_CachedStrFormat("-> <<1>>", ESOPIE_COLOR_SLOT:Colorize(slot.name)))
+                    table.insert(ui.configurationChoices, ZO_CachedStrFormat("... <<1>> (<<2>>)", ESOPIE_COLOR_SLOT:Colorize(slot.name), slot.sortorder))
                     table.insert(ui.configurationValues, slot.uniqueid)
                 end
             end
         end
-    end
-    for _, choice in pairs(ui.configurationChoices) do
-        LogVerbose("> %s", choice)
     end
     UpdateDropdown("ESOPIE_Configure_Selection", ui.configurationChoices, ui.configurationValues)
 end
@@ -723,7 +736,7 @@ end
 function ESOPie:InitializeSettings()
     LogVerbose("Loading save data %s v%d.", self.savedVars, self.savedVarsVersion)
     self.db = ZO_SavedVars:NewAccountWide(self.savedVars, self.savedVarsVersion, nil, ESOPIE_DB_DEFAULT)
-    CleanOrphanedSlots()
+    CleanSaveData()
     SortAllRings()
 
     local function OnConfirmRemoveEntry()
@@ -802,6 +815,7 @@ function ESOPie:InitializeSettings()
         UpdateCollectionsCache()
         RefreshConfigurationHeader()
         RebuildAll()
+        RebuildExtensionOptions()
         ui.initialized = true
     end
 
@@ -810,7 +824,6 @@ function ESOPie:InitializeSettings()
         LogVerbose("OnPanelOpened")
         RefreshBindingWarning()
         RebuildActionsDropdown()
-        RebuildExtensionOptions()
     end
 
     --[[
@@ -829,35 +842,34 @@ function ESOPie:InitializeSettings()
 
     local function BuildSubringActionExtensions(controls)
         if DressingRoom then
-            local dressingRoomSubmenu = {
-                    type = "submenu",
-                    name = L(ESOPIE_SI_SETTINGS_EXT_DRMENU),
-                    disabled = function() return not ESOPie.utils.IsActionOfType(ui.currentEditing, ESOPie.Action.SetDRSlot) end,
-                    controls = {
-                        {
-                            type = "dropdown",
-                            reference = "ESOPIE_DressingRoom_SlotSelect",
-                            name = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT),
-                            tooltip = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT_TT),
-                            scrollable = true,
-                            choices = {},
-                            choicesValues = {},
-                            getFunc = function()
-                                if ESOPie.utils.IsActionOfType(ui.currentEditing, ESOPie.Action.SetDRSlot) and type(ui.currentEditing.data) == "number" then
-                                    return ui.currentEditing.data
-                                else
-                                    return 0
-                                end
-                            end,
-                            setFunc = function(value)
-                                if ESOPie.utils.IsActionOfType(ui.currentEditing, ESOPie.Action.SetDRSlot) then
-                                    ui.currentEditing.data = value
-                                end
-                            end,
-                        },
-                    }
-            }
-            table.insert(controls, dressingRoomSubmenu)
+            table.insert(controls, {
+                type = "submenu",
+                name = L(ESOPIE_SI_SETTINGS_EXT_DRMENU),
+                disabled = function() return not ESOPie.utils.IsActionOfType(ui.currentEditing, ESOPie.Action.SetDRSlot) end,
+                controls = {
+                    {
+                        type = "dropdown",
+                        reference = "ESOPIE_DressingRoom_SlotSelect",
+                        name = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT),
+                        tooltip = L(ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT_TT),
+                        scrollable = true,
+                        choices = {},
+                        choicesValues = {},
+                        getFunc = function()
+                            if ESOPie.utils.IsActionOfType(ui.currentEditing, ESOPie.Action.SetDRSlot) and type(ui.currentEditing.data) == "number" then
+                                return ui.currentEditing.data
+                            else
+                                return 0
+                            end
+                        end,
+                        setFunc = function(value)
+                            if ESOPie.utils.IsActionOfType(ui.currentEditing, ESOPie.Action.SetDRSlot) then
+                                ui.currentEditing.data = value
+                            end
+                        end,
+                    },
+                }
+            })
         end
     end
 
@@ -1275,7 +1287,7 @@ function ESOPie:InitializeSettings()
                     name = L(ESOPIE_SI_SETTINGS_ICONFROMCOLLECTIBLE),
                     tooltip = L(ESOPIE_SI_SETTINGS_ICONFROMCOLLECTIBLE_TT),
                     width = "full",
-                    disabled = function() return not ESOPie.utils.IsCollectableAction(ui.currentEditing) end,
+                    disabled = function() return not ESOPie.utils.IsIconResolvable(ui.currentEditing) end,
                     func = function()
                         if ESOPie.utils.EntryIsSlot(ui.currentEditing) then
                             ui.currentEditing.icon = ESOPie.utils.ResolveEntryIcon(ui.currentEditing) or ""
@@ -1314,7 +1326,6 @@ function ESOPie:InitializeSettings()
                 {
                     type = "slider",
                     name = L(ESOPIE_SI_SETTINGS_ORG_SLOTORDER),
-                    tooltip = L(ESOPIE_SI_SETTINGS_ORG_SLOTORDER_TT),
                     min = 0,
                     max = 100,
                     getFunc = function()
@@ -1333,6 +1344,10 @@ function ESOPie:InitializeSettings()
                             end
                         end
                     end,
+                },
+                {
+                    type = "description",
+                    text = ZO_HINT_TEXT:Colorize(L(ESOPIE_SI_SETTINGS_ORG_SLOTORDERHINT)),
                 },
                 {
                     type = "dropdown",

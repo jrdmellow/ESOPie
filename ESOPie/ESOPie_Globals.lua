@@ -244,13 +244,17 @@ ESOPie.utils.CollectionHasCategory = function(entry)
     })
 end
 
+ESOPie.utils.IsIconResolvable = function(entry)
+    return ESOPie.utils.IsCollectableAction(entry) or ESOPie.utils.IsActionOfType(entry, ESOPie.Action.GoToHome)
+end
+
 ESOPie.utils.ResolveEntryIcon = function(entry)
     if ESOPie.utils.EntryIsSlot(entry) then
         if ESOPie.utils.IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
             return GetCollectibleIcon(entry.data)
         elseif ESOPie.utils.IsActionOfType(entry, ESOPie.Action.GoToHome) then
             local houseId = nil
-            if entry.data and entry.data.houseId and type(entry.data.houseId) == "number" then
+            if entry.data and type(entry.data) == "table" and entry.data.houseId and type(entry.data.houseId) == "number" then
                 houseId = entry.data.houseId
             else
                 houseId = GetHousingPrimaryHouse()

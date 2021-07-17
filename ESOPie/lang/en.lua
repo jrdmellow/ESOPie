@@ -59,7 +59,6 @@ local strings = {
     ESOPIE_SI_SETTINGS_NOBINDINGSDETECTED       = "|cffff00Warning:|r No ring bindings have been detected. In order to use ESOPie at least one ring binding must be assigned.\nGo to the Controls settings and assign a key or button to at least one ESOPie ring.",
     ESOPIE_SI_SETTINGS_GENERALMENU_NAME         = "General Options",
     ESOPIE_SI_SETTINGS_CONFIGUREHEADER_NAME     = "Rings and Slots",
-    ESOPIE_SI_SETTINGS_DROPDOWNRING             = "Ring: <<1>>",
 
     ESOPIE_SI_SETTINGS_BINDINGSHEADER           = "Ring Bindings",
     ESOPIE_SI_SETTINGS_RINGBINDING1             = "Ring Binding 1",
@@ -128,7 +127,7 @@ local strings = {
 
     ESOPIE_SI_SETTINGS_ORG_HEADER               = "Slot Organization",
     ESOPIE_SI_SETTINGS_ORG_SLOTORDER            = "Slot Priority",
-    ESOPIE_SI_SETTINGS_ORG_SLOTORDER_TT         = "Entries will be sorted from the lowest value to highest.",
+    ESOPIE_SI_SETTINGS_ORG_SLOTORDERHINT        = "Note: Entries will be sorted from the lowest value to highest. Slots are filled counter-clockwise from the bottom-right.",
     ESOPIE_SI_SETTINGS_ORG_MOVETORING           = "Move To",
     ESOPIE_SI_SETTINGS_ORG_MOVETORING_TT        = "Select the ring to move this slot to.",
 
@@ -136,9 +135,9 @@ local strings = {
     ESOPIE_SI_SETTINGS_ORG_CONFIRMMOVESLOT_TITLE= "Move Slot",
 
     ESOPIE_SI_SETTINGS_EXT_DRMENU               = "Dressing Room",
-    ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT         = "Slot",
-    ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT_TT      = "Dressing Room slot to switch to when activated.",
-    ESOPIE_SI_SETTINGS_EXT_DRSLOT               = "Slot <<1>>",
+    ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT         = "Outfit",
+    ESOPIE_SI_SETTINGS_EXT_DRSLOTSELECT_TT      = "Dressing Room outfit slot to switch to when activated.",
+    ESOPIE_SI_SETTINGS_EXT_DRSLOT               = "Outfit <<1>>",
 
     -- Collection Tooltips
     ESOPIE_SI_TOOLTIP_DOEMOTE                   = "Do the <<1>> emote.",

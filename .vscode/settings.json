@@ -42,6 +42,12 @@
         "DressingRoom",
         "SetTooltipText",
         "ClearTooltip",
-        "ZO_HINT_TEXT"
+        "ZO_HINT_TEXT",
+        "GetCollectibleIcon",
+        "GetHousingPrimaryHouse",
+        "GetCollectibleIdForHouse",
+        "zo_strformat",
+        "TOPLEFT",
+        "BOTTOMRIGHT"
     ]
 }

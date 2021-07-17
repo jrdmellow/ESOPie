@@ -194,27 +194,6 @@ function ESOPie:Initialize()
     LogInfo("%s %s initalized.", self.name, self.version)
 end
 
-function ESOPie:ResolveEntryIcon(entry)
-    if self.utils.EntryIsSlot(entry) then
-        if not entry.icon or entry.icon == "" then
-            if self.utils.IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
-                return GetCollectibleIcon(entry.data)
-            elseif self.utils.IsActionOfType(entry, ESOPie.Action.GoToHome) then
-                local houseId = nil
-                if entry.data and entry.data.houseId and type(entry.data.houseId) == "number" then
-                    houseId = entry.data.houseId
-                else
-                    houseId = GetHousingPrimaryHouse()
-                end
-                if houseId then return GetCollectibleIcon(GetCollectibleIdForHouse(houseId)) end
-            end
-        else
-            return entry.icon
-        end
-    end
-    return ESOPIE_ICON_SLOT_DEFAULT
-end
-
 function ESOPie:GetActiveControlSettings()
     if IsInGamepadPreferredMode() then
         return self.db.controlOptions["gamepad"]
@@ -291,9 +270,12 @@ function ESOPie:OnPopulateSlots()
         if slotInfo then
             -- TODO: check visibility condition
             local name = slotInfo.name
-            local icon = self:ResolveEntryIcon(slotInfo)
+            local icon = slotInfo.icon
+            if not icon or icon == "" then
+                icon = ESOPie.utils.ResolveEntryIcon(slotInfo)
+            end
             if name == nil or name == '' then name = "Slot " .. i end
-            if icon == nil or icon == '' then icon = ESOPIE_ICON_SLOT_DEFUALT end
+            if icon == nil or icon == '' then icon = ESOPIE_ICON_SLOT_DEFAULT end
             self.pieRoot:AddSlot(name, icon, icon, slotInfo.uniqueid)
         end
     end

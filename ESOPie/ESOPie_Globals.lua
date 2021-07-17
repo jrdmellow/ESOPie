@@ -244,6 +244,23 @@ ESOPie.utils.CollectionHasCategory = function(entry)
     })
 end
 
+ESOPie.utils.ResolveEntryIcon = function(entry)
+    if ESOPie.utils.EntryIsSlot(entry) then
+        if ESOPie.utils.IsCollectableAction(entry) and entry.data and type(entry.data) == "number" then
+            return GetCollectibleIcon(entry.data)
+        elseif ESOPie.utils.IsActionOfType(entry, ESOPie.Action.GoToHome) then
+            local houseId = nil
+            if entry.data and entry.data.houseId and type(entry.data.houseId) == "number" then
+                houseId = entry.data.houseId
+            else
+                houseId = GetHousingPrimaryHouse()
+            end
+            if houseId then return GetCollectibleIcon(GetCollectibleIdForHouse(houseId)) end
+        end
+    end
+    return nil
+end
+
 ESOPIE_COLOR_RING = ZO_ColorDef:New("D68F4D")
 ESOPIE_COLOR_SLOT = ZO_ColorDef:New("71C9B4")
 

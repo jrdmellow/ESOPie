@@ -48,6 +48,9 @@
         "GetCollectibleIdForHouse",
         "zo_strformat",
         "TOPLEFT",
-        "BOTTOMRIGHT"
+        "BOTTOMRIGHT",
+        "IsInGamepadPreferredMode",
+        "PushActionLayerByName",
+        "RemoveActionLayerByName"
     ]
 }

@@ -48,6 +48,10 @@ function ESOPie_RadialMenuController:SetSlotNavigateCallback(callback)
     self.onSlotNavigateCallback = callback
 end
 
+function ESOPie_RadialMenuController:SetMenuStateChangeCallback(callback)
+    self.onMenuStateChange = callback
+end
+
 function ESOPie_RadialMenuController:SetCancelCallback(callback)
     self.onCancelCallback = callback
 end
@@ -68,12 +72,19 @@ end
 function ESOPie_RadialMenuController:StopInteraction()
     local wasShowingRadial = self.beginHold == nil
     self.beginHold = nil
+    EVENT_MANAGER:UnregisterForEvent("ESOPie", EVENT_GLOBAL_MOUSE_UP)
+    LockCameraRotation(false)
+    RETICLE:RequestHidden(false)
     if self.isInteracting then
         self.isInteracting = false
-        EVENT_MANAGER:UnregisterForEvent("ESOPie", EVENT_GLOBAL_MOUSE_UP)
-        LockCameraRotation(false)
-        RETICLE:RequestHidden(false)
-        self.menu:SelectCurrentEntry()
+        if self.currentSelectedEntry then
+            self.menu:SelectCurrentEntry()
+        else
+            self.menu:Clear()
+        end
+        if self.onMenuStateChange then
+            self.onMenuStateChange(false)
+        end
     end
     return wasShowingRadial
 end
@@ -104,9 +115,14 @@ function ESOPie_RadialMenuController:ShowMenu()
         self.menuControl.selectedLabel:SetFont("ZoInteractionPrompt")
     end
     self.menuControl.selectedLabel:SetText("")
+    if not self.isInteracting then
+        LockCameraRotation(true)
+        RETICLE:RequestHidden(true)
+        if self.onMenuStateChange then
+            self.onMenuStateChange(true)
+        end
+    end
     self.isInteracting = true
-    LockCameraRotation(true)
-    RETICLE:RequestHidden(true)
 end
 
 function ESOPie_RadialMenuController:IsInteracting()
@@ -168,10 +184,13 @@ end
 
 function ESOPie_RadialMenuController:NavigateCurrentSelection()
     if not self.onSlotNavigateCallback then d("OnSlotNavigate callback not set") return end
-    self.onSlotNavigateCallback(self.currentSelectedEntry)
+    if self.currentSelectedEntry then
+        self.onSlotNavigateCallback(self.currentSelectedEntry)
+    end
 end
 
 function ESOPie_RadialMenuController:CancelSelection()
+    self.currentSelectedEntry = nil
     if self.onCancelCallback then self.onCancelCallback() end
     self:StopInteraction()
 end

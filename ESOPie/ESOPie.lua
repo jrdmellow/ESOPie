@@ -140,11 +140,83 @@ end
 -- Initialization
 
 function ESOPie:Initialize()
+    local function OnSlotActivate(selectedEntry)
+        LogVerboseC("debugCallbacks", "OnSlotActivate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
+        local interactMode = self:GetActiveControlSettings().bindingInteractMode
+        if interactMode == ESOPie.InteractMode.Hold then
+            self:ExecuteSlotAction(selectedEntry)
+        end
+    end
+
+    local function OnSlotNavigate(selectedEntry)
+        LogVerboseC("debugCallbacks", "OnSlotNavigate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
+        local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
+        if not slotInfo then LogWarning("Invalid slot info for navigate") return end
+        if slotInfo.action == ESOPie.Action.Submenu then
+            LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), tostring(slotInfo.data))
+            self.pieRoot.menuControl.selectedLabel:SetText("")
+            self.displayedRing = self.utils.FindEntryByID(slotInfo.data, self.db.entries, self.EntryType.Ring)
+            if self.displayedRing then
+                ESOPie.pieRoot:ShowMenu()
+            else
+                self.pieRoot:StopInteraction()
+                LogError("Displayed ring not valid")
+            end
+        else
+            local interactMode = self:GetActiveControlSettings().bindingInteractMode
+            if interactMode == ESOPie.InteractMode.Toggle then
+                self:ExecuteSlotAction(selectedEntry)
+                self.pieRoot:StopInteraction()
+            end
+        end
+    end
+
+    local function OnPopulateSlots()
+        local ring = ESOPie.displayedRing
+        if not ring or not ring.slots then LogWarning("Displayed ring not valid.") return end
+        local maxSlots = ESOPie.maxVisibleSlots
+        if ESOPie.showCancelButton then
+            maxSlots = maxSlots - 1
+        end
+        local slotCount = math.min(maxSlots, #ring.slots)
+        for i=1, slotCount do
+            local slotInfo = self.utils.FindEntryByID(ring.slots[i], self.db.entries)
+            if slotInfo then
+                -- TODO: check visibility condition
+                local name = slotInfo.name
+                local icon = slotInfo.icon
+                if not icon or icon == "" then
+                    icon = ESOPie.utils.ResolveEntryIcon(slotInfo)
+                end
+                if name == nil or name == '' then name = "Slot " .. i end
+                if icon == nil or icon == '' then icon = ESOPIE_ICON_SLOT_DEFAULT end
+                self.pieRoot:AddSlot(name, icon, icon, slotInfo.uniqueid)
+            end
+        end
+        if ESOPie.showCancelButton or slotCount == 1 then -- RadialMenu needs at least 2 items
+            self.pieRoot:AddSlot(L(SI_RADIAL_MENU_CANCEL_BUTTON), ESOPIE_ICON_SLOT_CANCEL, ESOPIE_ICON_SLOT_CANCEL, 0)
+        end
+    end
+
+    local function OnMenuStateChange(isShowing)
+        LogVerboseC("debugCallbacks", "OnMenuStateChange(%s)", tostring(isShowing))
+        if isShowing then
+            if IsInGamepadPreferredMode() and self.actionLayerName then
+                PushActionLayerByName(self.actionLayerName)
+            end
+        else
+            if self.actionLayerName then
+                RemoveActionLayerByName(self.actionLayerName)
+            end
+        end
+    end
+
     self:InitializeSettings()
     self.pieRoot = ESOPie_RadialMenuController:New(ESOPie_UI_Root, "ESOPie_EntryTemplate", self.radialAnimation, self.entryAnimation)
-    self.pieRoot:SetSlotActivateCallback(function(selectedEntry) self:OnSlotActivate(selectedEntry) end)
-    self.pieRoot:SetSlotNavigateCallback(function(selectedEntry) self:OnSlotNavigate(selectedEntry) end)
-    self.pieRoot:SetPopulateSlotsCallback(function() self:OnPopulateSlots() end)
+    self.pieRoot:SetSlotActivateCallback(OnSlotActivate)
+    self.pieRoot:SetSlotNavigateCallback(OnSlotNavigate)
+    self.pieRoot:SetPopulateSlotsCallback(OnPopulateSlots)
+    self.pieRoot:SetMenuStateChangeCallback(OnMenuStateChange)
 
     self.interactionLayer = ZO_ActionLayerFragment:New(self.actionLayerName)
 
@@ -226,89 +298,29 @@ function ESOPie:ExecuteSlotAction(selectedEntry)
     end
 end
 
-function ESOPie:OnSlotActivate(selectedEntry)
-    LogVerboseC("debugCallbacks", "OnSlotActivate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
-    local interactMode = self:GetActiveControlSettings().bindingInteractMode
-    if interactMode == ESOPie.InteractMode.Hold then
-        self:ExecuteSlotAction(selectedEntry)
-    end
-end
-
-function ESOPie:OnSlotNavigate(selectedEntry)
-    LogVerboseC("debugCallbacks", "OnSlotNavigate(%s)", GetValueSafe(selectedEntry, "name", "Invalid entry"))
-    local slotInfo = self:GetSelectedSlotFromEntry(selectedEntry)
-    if not slotInfo then LogWarning("Invalid slot info for navigate") return end
-    if slotInfo.action == ESOPie.Action.Submenu then
-        LogVerbose("NavigateTo %s (%s): %s", slotInfo.name, self.utils.GetActionTypeString(slotInfo.action), tostring(slotInfo.data))
-        self.pieRoot.menuControl.selectedLabel:SetText("")
-        self.displayedRing = self.utils.FindEntryByID(slotInfo.data, self.db.entries, self.EntryType.Ring)
-        if self.displayedRing then
-            ESOPie.pieRoot:ShowMenu()
-        else
-            self.pieRoot:StopInteraction()
-            LogError("Displayed ring not valid")
-        end
-    else
-        local interactMode = self:GetActiveControlSettings().bindingInteractMode
-        if interactMode == ESOPie.InteractMode.Toggle then
-            self:ExecuteSlotAction(selectedEntry)
-            self.pieRoot:StopInteraction()
-        end
-    end
-end
-
-function ESOPie:OnPopulateSlots()
-    local ring = ESOPie.displayedRing
-    if not ring or not ring.slots then LogWarning("Displayed ring not valid.") return end
-    local maxSlots = ESOPie.maxVisibleSlots
-    if ESOPie.showCancelButton then
-        maxSlots = maxSlots - 1
-    end
-    local slotCount = math.min(maxSlots, #ring.slots)
-    for i=1, slotCount do
-        local slotInfo = self.utils.FindEntryByID(ring.slots[i], self.db.entries)
-        if slotInfo then
-            -- TODO: check visibility condition
-            local name = slotInfo.name
-            local icon = slotInfo.icon
-            if not icon or icon == "" then
-                icon = ESOPie.utils.ResolveEntryIcon(slotInfo)
-            end
-            if name == nil or name == '' then name = "Slot " .. i end
-            if icon == nil or icon == '' then icon = ESOPIE_ICON_SLOT_DEFAULT end
-            self.pieRoot:AddSlot(name, icon, icon, slotInfo.uniqueid)
-        end
-    end
-    if ESOPie.showCancelButton or slotCount == 1 then -- RadialMenu needs at least 2 items
-        self.pieRoot:AddSlot(L(SI_RADIAL_MENU_CANCEL_BUTTON), ESOPIE_ICON_SLOT_CANCEL, ESOPIE_ICON_SLOT_CANCEL, 0)
-    end
-end
-
 function ESOPie:ShowRing(ringIndex)
+    assert(ringIndex)
     if not self.pieRoot:IsInteracting() then
         self.currentSlotInfo = nil
         self.displayedRing = self:GetRootRing(ringIndex)
         if self.displayedRing then
             self.activeBindingIndex = ringIndex
-            if IsInGamepadPreferredMode() then
-                PushActionLayerByName(self.actionLayerName)
-            end
             self.pieRoot:StartInteraction()
         end
     else
-        LogWarning("Cannot open ring binding %d. Ring binding %d is already active", ringIndex, self.activeBindingIndex)
+        LogWarning("Cannot open ring binding %d. Ring binding %s is already active", ringIndex, tostring(self.activeBindingIndex))
     end
 end
 
 function ESOPie:HideRing(ringIndex)
+    assert(ringIndex)
     if self.pieRoot:IsInteracting() then
         assert(self.activeBindingIndex)
         if self.activeBindingIndex == ringIndex then
             self.activeBindingIndex = nil
-            RemoveActionLayerByName(self.actionLayerName)
             self.pieRoot:StopInteraction()
         else
-            LogWarning("Cannot hide ring binding %d. Ring binding %d is currently active.", ringIndex, self.activeBindingIndex)
+            LogWarning("Cannot hide ring binding %d. Ring binding %s is currently active.", ringIndex, tostring(self.activeBindingIndex))
         end
     end
 end
@@ -347,11 +359,11 @@ end
 
 function ESOPie:OnNavigateInteraction()
     LogVerboseC("debugCallbacks", "OnNavigateInteraction")
-    self:OnSlotNavigate(self.pieRoot.currentSelectedEntry)
+    self.pieRoot:NavigateCurrentSelection()
 end
 
 function ESOPie:OnCancelInteraction()
-    LogVerboseC("debugCallbacks", "OnNavigateInteraction")
+    LogVerboseC("debugCallbacks", "OnCancelInteraction")
     self.pieRoot:CancelSelection()
 end
 
